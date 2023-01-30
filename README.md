@@ -22,19 +22,19 @@ pip install -e .
 - **Path Track (example/path_track.py)**
 
 <div align=center>
-<img src="example\path_track\animation\path_track.gif" width="300" />
+<img src="example\path_track\animation\path_track.gif" width="700" />
 </div>
 
 - **Cross Corridor (example/corridor.py)**
 
 <div align=center>
-<img src="example\corridor\animation\corridor.gif" width="500" />
+<img src="example\corridor\animation\corridor.gif" width="700" />
 </div>
 
 - **Reverse Parking (example/reverse.py)**
 
 <div align=center>
-<img src="example\reverse\animation\reverse_park.gif" width="300" />
+<img src="example\reverse\animation\reverse_park.gif" width="700" />
 </div>
 
 
