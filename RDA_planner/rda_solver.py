@@ -108,7 +108,7 @@ class RDA_solver:
     def update_adjust_parameter(self, **kwargs):
         # self.para_ws.value = kwargs.get('ws', 1)
         # self.para_wu.value = kwargs.get('wu', 1) 
-        self.para_slack_gain = kwargs.get('slack_gain', 10)
+        self.para_slack_gain = kwargs.get('slack_gain', 8)
         self.para_max_sd.value = kwargs.get('max_sd', 1.0)
         self.para_min_sd.value = kwargs.get('min_sd', 0.1)
 

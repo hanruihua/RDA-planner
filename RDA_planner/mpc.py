@@ -16,7 +16,7 @@ class MPC:
                             and the reference path would be splitted in the change of direction.
             iter_threshold (0.2): The threshold to stop the iteration. 
             process_num (4): The number of processes to solve the rda problem. Depends on your computer
-            *slack_gain (10): slack gain value for l1 regularization, see paper for details.
+            *slack_gain (8): slack gain value for l1 regularization, see paper for details.
             *max_sd (1.0): maximum safety distance.
             *min_sd (0.1): minimum safety distance.
             ws (1): The wight for the state difference cost.
@@ -25,7 +25,8 @@ class MPC:
             ro2 (1): The penalty parameter in ADMM.
             init_vel ([0,0]): The initial velocity of the car robot.
         '''
-        self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed acce'
+        
+        self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed max_acce'
         self.L = car_tuple.wheelbase  # wheel base
 
         self.receding = receding
