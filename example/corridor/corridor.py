@@ -1,38 +1,33 @@
 from ir_sim.env import EnvBase
-import sys
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
-import matplotlib.pyplot as plt
-import time
 from GCT.curve_generator import curve_generator
 
+# start and goal point of the robot
 start_point = np.array([[0], [20], [0]])
 goal_point = np.array([[60], [20], [0]])
-
 point_list = [start_point, goal_point]
 
-cg = curve_generator(select_mode='default', x_limit = [0, 50], y_limit=[0, 50])
-ref_path_list = cg.generate_curve('dubins', point_list, 0.1, 5, include_gear=True)
-# cg.plot_curve(ref_path_list, show_direction=False)
+# generate dubins curve
+cg = curve_generator()
+ref_path_list = cg.generate_curve('dubins', point_list, 0.1, 5)
 
-# plt.close()
+# init simulated environment
+robot_init_point = np.zeros((4, 1))
+robot_init_point[0:3] = ref_path_list[0][0:3]
 
-init_point = ref_path_list[0][0:3]
-add_dim = np.array([[0]])
-init_point = np.vstack((init_point, add_dim))
-env = EnvBase('corridor.yaml', save_ani=False, full=False, display=True, robot_args={'state': init_point, 'goal':goal_point})
-car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
+env = EnvBase('corridor.yaml', save_ani=False, full=False, display=True, robot_args={'state': robot_init_point, 'goal':goal_point})
+car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')  # robot information
 
 env.draw_trajectory(ref_path_list, traj_type='-k')
-# env.show()
 
 if __name__ == '__main__':
 
     obs_list = env.get_obstacle_list()
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
-    mpc_opt = MPC(car_tuple, obs_list, ref_path_list, sample_time=env.step_time)
+    mpc_opt = MPC(car_tuple, obs_list, ref_path_list, slack_gain=8, sample_time=env.step_time)
     
     for i in range(500):   
         
@@ -42,7 +37,7 @@ if __name__ == '__main__':
 
         env.step(opt_vel)
         env.render(show_traj=True, show_trail=True)
-        # env.render(0.1, show_traj=True)
+        
         if env.done():
             break
         
@@ -50,5 +45,5 @@ if __name__ == '__main__':
             print('arrive at the goal')
             break
 
-    env.end(ani_name='corridor', show_traj=True, show_trail=True, rm_fig_path=True, ending_time=10, ani_kwargs={'subrectangles':True})
+    env.end(ani_name='corridor', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
     
