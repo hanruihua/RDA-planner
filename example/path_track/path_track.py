@@ -5,7 +5,7 @@ from RDA_planner.mpc import MPC
 from collections import namedtuple
 
 # environment
-env = EnvBase('path_track.yaml', save_ani=True, display=True, full=True)
+env = EnvBase('path_track.yaml', save_ani=False, display=True, full=False)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
 
 # saved ref path
