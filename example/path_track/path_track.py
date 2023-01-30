@@ -5,7 +5,7 @@ from RDA_planner.mpc import MPC
 from collections import namedtuple
 
 # environment
-env = EnvBase('path_track.yaml', save_ani=False, display=True)
+env = EnvBase('path_track.yaml', save_ani=True, display=True, full=True)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
 
 # saved ref path
@@ -34,7 +34,7 @@ def main():
             print('arrive at the goal')
             break
 
-    env.end(ani_name='path_track', show_traj=True, show_trail=True, rm_fig_path=True, ending_time=10, ani_kwargs={'subrectangles':True})
+    env.end(ani_name='path_track', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
     
 if __name__ == '__main__':
     main()
