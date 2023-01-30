@@ -1,30 +1,25 @@
 from ir_sim.env import EnvBase
-import sys
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
-import matplotlib.pyplot as plt
-import time
 from GCT.curve_generator import curve_generator
 
-#custom
+# start and goal point of the robot
 point1 = np.array([ [5], [40], [0]])
 point2 = np.array([ [35], [11], [-3.14]])
 point3 = np.array([ [43.8], [11], [-3.14]])
-
 point_list = [point1, point2, point3]
 
-cg = curve_generator(select_mode='default', x_limit = [0, 50], y_limit=[0, 50])
+cg = curve_generator()
 ref_path_list = cg.generate_curve('reeds', point_list, 0.5, 5, include_gear=True)
 
-init_point = ref_path_list[0][0:3]
-add_dim = np.array([[0]])
-init_point = np.vstack((init_point, add_dim))
-env = EnvBase('reverse.yaml', save_ani=False, display=True, robot_args={'state': init_point, 'goal':point3})
+robot_init_point = np.zeros((4, 1))
+robot_init_point[0:3] = ref_path_list[0][0:3]
+
+env = EnvBase('reverse.yaml', save_ani=False, display=True, full=False, robot_args={'state': robot_init_point, 'goal':point3})
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
 
 env.draw_trajectory(ref_path_list, traj_type='-k')
-# env.show()
 
 if __name__ == '__main__':
 
@@ -53,5 +48,5 @@ if __name__ == '__main__':
             print('arrive at the goal')
             break
 
-    env.end(ani_name='reverse_park', show_traj=True, show_trail=True, rm_fig_path=True, ending_time=10, ani_kwargs={'subrectangles':True})
+    env.end(ani_name='reverse_park', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
     
