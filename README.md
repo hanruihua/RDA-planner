@@ -1,6 +1,14 @@
-# RDA_planner
+ # RDA_planner
+
+The source code of the paper 
+
+## Prerequisite
 
 
 
+## Installation 
 
-The source code of 
+```
+git clone 
+
+```
