@@ -41,3 +41,6 @@ pip install -e .
 
 
 ## Citation
+
+If you find this code or paper is helpful, you can **star** this repository and cite our paper by the following **BibTeX** entry:
+
