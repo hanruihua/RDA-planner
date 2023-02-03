@@ -2,6 +2,8 @@
 
 The source code of the paper "RDA: An Accelerated Collision Free Motion Planner for Autonomous Navigation in Cluttered Environments" [**RA-Letter**] 
 
+**[`PDF_Arxiv`](https://arxiv.org/pdf/2210.00192.pdf)**
+
 ## Prerequisite
 - Python >= 3.8
 - numpy
