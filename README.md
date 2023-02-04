@@ -2,7 +2,7 @@
 
 The source code of the paper "RDA: An Accelerated Collision Free Motion Planner for Autonomous Navigation in Cluttered Environments" [**RA-Letter**] 
 
-**[`PDF_Arxiv`](https://arxiv.org/pdf/2210.00192.pdf)**
+| **[`PDF_IEEE`](https://ieeexplore.ieee.org/document/10036019)** | **[`PDF_Arxiv`](https://arxiv.org/pdf/2210.00192.pdf)** | **[`Video_Youtube`](https://www.youtube.com/watch?v=qUNMQQRhNFo)** | **[`Video_Bilibili`](https://www.bilibili.com/video/BV1zT411d7aL/?vd_source=cf6ba629063343717a192a5be9fe8985)** | 
 
 ## Prerequisite
 - Python >= 3.8
@@ -49,3 +49,14 @@ Han Ruihua (hanrh@connect.hku.hk)
 
 If you find this code or paper is helpful, you can **star** this repository and cite our paper by the following **BibTeX** entry:
 
+```
+@ARTICLE{10036019,
+  author={Han, Ruihua and Wang, Shuai and Wang, Shuaijun and Zhang, Zeqing and Zhang, Qianru and Eldar, Yonina C. and Hao, Qi and Pan, Jia},
+  journal={IEEE Robotics and Automation Letters}, 
+  title={RDA: An Accelerated Collision Free Motion Planner for Autonomous Navigation in Cluttered Environments}, 
+  year={2023},
+  volume={},
+  number={},
+  pages={1-8},
+  doi={10.1109/LRA.2023.3242138}}
+```
