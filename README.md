@@ -50,13 +50,14 @@ Han Ruihua (hanrh@connect.hku.hk)
 If you find this code or paper is helpful, you can **star** this repository and cite our paper by the following **BibTeX** entry:
 
 ```
-@ARTICLE{10036019,
+  @ARTICLE{10036019,
   author={Han, Ruihua and Wang, Shuai and Wang, Shuaijun and Zhang, Zeqing and Zhang, Qianru and Eldar, Yonina C. and Hao, Qi and Pan, Jia},
   journal={IEEE Robotics and Automation Letters}, 
   title={RDA: An Accelerated Collision Free Motion Planner for Autonomous Navigation in Cluttered Environments}, 
   year={2023},
-  volume={},
-  number={},
-  pages={1-8},
+  volume={8},
+  number={3},
+  pages={1715-1722},
   doi={10.1109/LRA.2023.3242138}}
+
 ```
