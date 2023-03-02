@@ -7,21 +7,25 @@ import time
 pool = None
 
 class RDA_solver:
-    def __init__(self, receding, car_tuple, obstacle_list, iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
+    def __init__(self, receding, car_tuple, obstacle_template_list, iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
+
+        '''
+        obstacle_template_list: the template for the obstacles to construct the problem
+        '''
 
         # setting
         self.T = receding
         self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed max_acce'
         self.L = car_tuple.wheelbase
         self.max_speed = np.c_[self.car_tuple.max_speed]
-        self.obstacle_list = obstacle_list
+        self.obstacle_list = obstacle_template_list
         self.iter_num = iter_num
         self.dt = step_time
         self.acce_bound = np.c_[car_tuple.max_acce] * self.dt 
         self.iter_threshold = iter_threshold
 
         # independ variable
-        self.definition(obstacle_list)
+        self.definition(obstacle_template_list)
 
         # flag
         # self.init_flag = True

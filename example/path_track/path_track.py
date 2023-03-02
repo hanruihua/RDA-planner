@@ -3,6 +3,7 @@ import sys
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
+import time
 
 # environment
 env = EnvBase('path_track.yaml', save_ani=False, display=True, full=False)
@@ -17,9 +18,11 @@ def main():
     obs_list = env.get_obstacle_list()
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
-    mpc_opt = MPC(car_tuple, obs_list, ref_path_list, sample_time=env.step_time)
+    
+    mpc_opt = MPC(car_tuple, obs_list, ref_path_list, sample_time=env.step_time, process_num=1)
     
     for i in range(500):   
+        
         opt_vel, info = mpc_opt.control(env.robot.state, ref_speed=4)
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 

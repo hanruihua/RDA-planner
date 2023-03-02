@@ -1,6 +1,7 @@
 import numpy as np
 from math import inf, sqrt, pi, sin, cos, tan
 from RDA_planner.rda_solver import RDA_solver
+import time
 
 class MPC:
     def __init__(self, car_tuple, obstacle_list, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, **kwargs) -> None:
@@ -37,7 +38,11 @@ class MPC:
         # flag
         self.cur_index = 0
         self.ref_path = ref_path
+
+        start_time = time.time()
         self.rda = RDA_solver(receding, car_tuple, obstacle_list, iter_num, sample_time, **kwargs)
+        print( time.time() - start_time)
+
         self.enable_reverse = enable_reverse
 
         if enable_reverse:
