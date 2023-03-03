@@ -7,10 +7,12 @@ import time
 pool = None
 
 class RDA_solver:
-    def __init__(self, receding, car_tuple, obstacle_template_list, iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
+    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 10}, {'edge_num': 4, 'obstacle_num': 10}], iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
 
         '''
-        obstacle_template_list: the template for the obstacles to construct the problem
+        obstacle_template_dict: the template for the obstacles to construct the problem, 
+            edge_num: number of convex obstacle edges; 
+            obstacle_num: number of convex obstacles; 
         '''
 
         # setting
@@ -18,13 +20,13 @@ class RDA_solver:
         self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed max_acce'
         self.L = car_tuple.wheelbase
         self.max_speed = np.c_[self.car_tuple.max_speed]
-        self.obstacle_list = obstacle_template_list
+        self.obstacle_template_list = obstacle_template_list
         self.iter_num = iter_num
         self.dt = step_time
         self.acce_bound = np.c_[car_tuple.max_acce] * self.dt 
         self.iter_threshold = iter_threshold
 
-        # independ variable
+        # independ variable and cvxpy parameters definition
         self.definition(obstacle_template_list)
 
         # flag
@@ -38,30 +40,27 @@ class RDA_solver:
             self.prob_su = self.update_su_prob(**kwargs)
             pool = Pool(processes=process_num, initializer=self.init_prob_LamMuZ, initargs=(kwargs, )) 
 
+    # definition of variables and parameters
+    def definition(self, obstacle_template_list):
 
-    def init_prob_LamMuZ(self, kwargs):
-        global prob_LamMuZ_list, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis
-
-        para_xi_list = self.para_xi_list
-        para_zeta_list = self.para_zeta_list
-        para_s = self.para_s
-        para_rot_list = self.para_rot_list
-        para_dis = self.para_dis
-
-        prob_LamMuZ_list = self.update_LamMuZ_prob_parallel(para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, **kwargs)
-
-    def definition(self, obstacle_list):
         self.state_variable_define()
-        self.obstacle_variable_define(obstacle_list)
+        self.obstacle_variable_define(obstacle_template_list)
         
         self.state_parameter_define()
-        self.obstacle_parameter_define(obstacle_list)
+        self.obstacle_parameter_define(obstacle_template_list)
 
-        self.adjust_parameter()
+        self.adjust_parameter_deine()
 
-    def obstacle_variable_define(self, obstacle_list):
+    def obstacle_variable_define(self, obstacle_template_list):
+        
+        '''
+        define the indep_lam; indep_mu; indep_z
+        ''' 
+        self.indep_lam_list = []
 
-        self.obstacle_list = obstacle_list
+        for obstacle_template in obstacle_template_list:
+            indep_lam_list = [ cp.Variable((obs.A.shape[0], self.T+1), name='lam_'+ str(obs_index)) for obs_index, obs in enumerate(obstacle_template)]
+
 
         # decision variables
         self.indep_lam_list = [ cp.Variable((obs.A.shape[0], self.T+1), name='lam_'+ str(obs_index)) for obs_index, obs in enumerate(obstacle_list)]
@@ -74,7 +73,7 @@ class RDA_solver:
         self.indep_u = cp.Variable((2, self.T), name='vel')
         self.indep_dis = cp.Variable((1, self.T), name='distance', nonneg=True)
 
-        self.indep_rot_list = [cp.Variable((2, 2), name='rot_'+str(t))  for t in range(self.T)]
+        self.indep_rot_list = [cp.Variable((2, 2), name='rot_'+str(t))  for t in range(self.T)]  # the variable of rotation matrix
 
     def state_parameter_define(self):
         
@@ -102,12 +101,24 @@ class RDA_solver:
         self.para_xi_list = [ cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_xi_'+str(obs_index)) for obs_index, obs in enumerate(obstacle_list)] 
         self.para_zeta_list = [ cp.Parameter((1, self.T), value = np.zeros((1, self.T)), name='para_zeta_'+str(obs_index)) for obs_index, obs in enumerate(obstacle_list)]
 
-    def adjust_parameter(self):
+    def adjust_parameter_define(self):
         # self.para_ws = cp.Parameter(value=1, nonneg=True)
         # self.para_wu = cp.Parameter(value=1, nonneg=True)
         self.para_slack_gain = cp.Parameter(value=10, nonneg=True)
         self.para_max_sd = cp.Parameter(value=1.0, nonneg=True)
         self.para_min_sd = cp.Parameter(value=0.1, nonneg=True)
+
+
+    def init_prob_LamMuZ(self, kwargs):
+        global prob_LamMuZ_list, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis
+
+        para_xi_list = self.para_xi_list
+        para_zeta_list = self.para_zeta_list
+        para_s = self.para_s
+        para_rot_list = self.para_rot_list
+        para_dis = self.para_dis
+
+        prob_LamMuZ_list = self.update_LamMuZ_prob_parallel(para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, **kwargs)
 
     def update_adjust_parameter(self, **kwargs):
         # self.para_ws.value = kwargs.get('ws', 1)
