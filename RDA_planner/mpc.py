@@ -40,7 +40,7 @@ class MPC:
         self.ref_path = ref_path
 
         start_time = time.time()
-        self.rda = RDA_solver(receding, car_tuple, **kwargs)
+        self.rda = RDA_solver(receding, car_tuple, iter_num=iter_num, **kwargs)
         print( time.time() - start_time)
 
         self.enable_reverse = enable_reverse
@@ -49,7 +49,7 @@ class MPC:
             self.curve_list = self.split_path(self.ref_path)
             self.curve_index = 0
 
-    def control(self, state, ref_speed=6, **kwargs):
+    def control(self, state, obs_list=[], ref_speed=6, **kwargs):
 
         if np.shape(state)[0] > 3:
             state = state[0:3]
@@ -63,7 +63,7 @@ class MPC:
 
         state_pre_array, ref_traj_list, self.cur_index = self.pre_process(state, cur_ref_path, self.cur_index, ref_speed, **kwargs)
 
-        u_opt_array, info = self.rda.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, gear_flag*ref_speed, **kwargs)
+        u_opt_array, info = self.rda.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, gear_flag*ref_speed, obs_list, **kwargs)
 
         if self.cur_index == len(cur_ref_path) - 1:
 

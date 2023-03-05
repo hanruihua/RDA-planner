@@ -15,14 +15,15 @@ ref_path_list = list(np.load(npy_path, allow_pickle=True))
 env.draw_trajectory(ref_path_list, traj_type='-k') # plot path
 
 def main():
-    obs_list = env.get_obstacle_list()
+    
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
     
-    mpc_opt = MPC(car_tuple, obs_list, ref_path_list, sample_time=env.step_time, process_num=1)
+    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, process_num=1)
     
     for i in range(500):   
         
+        # obs_list = env.get_obstacle_list()
         opt_vel, info = mpc_opt.control(env.robot.state, ref_speed=4)
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
