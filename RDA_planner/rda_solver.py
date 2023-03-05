@@ -15,7 +15,7 @@ from collections import namedtuple
 pool = None
 
 class RDA_solver:
-    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 10, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 10, 'cone_type': 'Rpositive'}], 
+    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 5, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 5, 'cone_type': 'Rpositive'}], 
                         iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
 
         '''
@@ -185,6 +185,7 @@ class RDA_solver:
     def construct_problem(self, **kwargs):
         self.prob_su = self.construct_su_prob(**kwargs)
         self.prob_LamMuZ_list = self.update_LamMuZ_prob(**kwargs)
+
 
     def construct_mp_problem(self, process_num, **kwargs):
         self.prob_su = self.construct_su_prob(**kwargs)
@@ -356,10 +357,14 @@ class RDA_solver:
         cost += 0.5*ro2 * cp.sum_squares(Hm_array)
 
         
+        temp_list = []
         for t in range(self.T):
             para_obsAt = para_obs['At'][t+1]
             indep_lam_t = indep_lam[:, t+1:t+2]
-            constraints += [ cp.norm(para_obsAt.T @ indep_lam_t) <= 1 ]
+            temp_list.append( cp.norm(para_obsAt.T @ indep_lam_t) )
+        
+        temp_array = cp.vstack(temp_list)
+        constraints += [ temp_array <= 1 ]
 
         # constraints += [ cp.norm(para_obs.A.T @ indep_lam, axis=0) <= 1 ]
         constraints += [ self.cone_cp_array(-indep_lam, para_obs['cone_type']) ]
