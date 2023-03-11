@@ -49,7 +49,7 @@ class MPC:
             self.curve_list = self.split_path(self.ref_path)
             self.curve_index = 0
 
-    def control(self, state, obs_list=[], ref_speed=6, **kwargs):
+    def control(self, state,  ref_speed=5, obs_list=[],**kwargs):
 
         if np.shape(state)[0] > 3:
             state = state[0:3]

@@ -23,8 +23,8 @@ def main():
     
     for i in range(500):   
         
-        # obs_list = env.get_obstacle_list()
-        opt_vel, info = mpc_opt.control(env.robot.state, ref_speed=4)
+        obs_list = env.get_obstacle_list()
+        opt_vel, info = mpc_opt.control(env.robot.state, 4, obs_list)
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
         env.step(opt_vel, stop=False)

@@ -15,7 +15,7 @@ from collections import namedtuple
 pool = None
 
 class RDA_solver:
-    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 10, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 10, 'cone_type': 'Rpositive'}], 
+    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 5, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 5, 'cone_type': 'Rpositive'}], 
                         iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
 
         '''
@@ -136,7 +136,7 @@ class RDA_solver:
 
                 A_list = [ cp.Parameter((oen, 2), value=np.zeros((oen, 2)), name='para_A_t'+ str(t)) for t in range(self.T+1)]
                 b_list = [ cp.Parameter((oen, 1), value=np.zeros((oen, 1)), name='para_b_t'+ str(t)) for t in range(self.T+1)]
-                para_obstacle={'At': A_list, 'bt': b_list, 'cone_type': ot['cone_type']}
+                para_obstacle={'A': A_list, 'b': b_list, 'cone_type': ot['cone_type'], 'edge_num': oen, 'assign': False}
 
                 self.para_obstacle_list.append(para_obstacle)
 
@@ -356,10 +356,9 @@ class RDA_solver:
         # constraints += [ Im_array >= 0 ]
         cost += 0.5*ro2 * cp.sum_squares(Hm_array)
 
-        
         temp_list = []
         for t in range(self.T):
-            para_obsAt = para_obs['At'][t+1]
+            para_obsAt = para_obs['A'][t+1]
             indep_lam_t = indep_lam[:, t+1:t+2]
             temp_list.append( cp.norm(para_obsAt.T @ indep_lam_t) )
         
@@ -426,11 +425,23 @@ class RDA_solver:
     def assign_obstacle_parameter(self, obstacle_list):
         
         # self.obstacle_template_list
+        
+        for obs in obstacle_list:
+            for para_obs in self.para_obstacle_list:
 
-        # for obs in obstacle_list:
+                obs_edge_num = obs.A.shape[0]
+                para_obs_edge_num = para_obs['edge_num']
 
-        #     if 
-        pass
+                if isinstance(obs.A, list):
+                    pass
+                else:
+                    if obs_edge_num == para_obs_edge_num and para_obs['assign'] is False:
+                        for t in range(len(para_obs['A'])):
+                            para_obs['A'][t].value = obs.A
+                            para_obs['b'][t].value = obs.b
+
+                        break
+        
 
     def assign_combine_parameter(self):
         pass
@@ -440,20 +451,26 @@ class RDA_solver:
     # region: solve the problem
     def iterative_solve(self, nom_s, nom_u, ref_states, ref_speed, obstacle_list, **kwargs):
 
+        # obstacle_list: a list of obstacle instance
+        #   obstacle: (A, b, cone_type)
+
         start_time = time.time()
         
         self.para_ref_s.value = np.hstack(ref_states)[0:3, :]
         self.para_ref_speed.value = ref_speed
 
         self.assign_state_parameter(nom_s, nom_u, self.para_dis.value)
+        self.assign_obstacle_parameter(obstacle_list)
 
         iteration_time = time.time()
         for i in range(self.iter_num):
 
             start_time = time.time()
-            opt_state_array, opt_velocity_array, resi_dual, resi_pri = self.rda_solver(obstacle_list)
+            opt_state_array, opt_velocity_array, resi_dual, resi_pri = self.rda_solver()
             print('iteration ' + str(i) + ' time: ', time.time()-start_time)
             
+            print(resi_dual)
+            print(resi_pri)
             if resi_dual < self.iter_threshold and resi_pri < self.iter_threshold:
                 print('iteration early stop: '+ str(i))
                 break
@@ -471,10 +488,8 @@ class RDA_solver:
         
         return opt_velocity_array, info 
 
-    def rda_solver(self, obstacle_list=[]):
+    def rda_solver(self):
         
-        self.assign_obstacle_parameter(obstacle_list)
-
         resi_dual, resi_pri = 0, 0
         
         nom_s, nom_u, nom_dis = self.su_prob_solve()
@@ -507,10 +522,10 @@ class RDA_solver:
 
                 trans_t = self.para_s.value[0:2, t+1:t+2]
 
-                obsA = para_obs['At'][t+1].value
-                obsb = para_obs['bt'][t+1].value
+                para_obsAt = para_obs['A'][t+1].value
+                para_obsbt = para_obs['b'][t+1].value
 
-                Im = lam_t.T @ obsA @ trans_t - lam_t.T @ obsb - mu_t.T @ self.car_tuple.h
+                Im = lam_t.T @ para_obsAt @ trans_t - lam_t.T @ para_obsbt - mu_t.T @ self.car_tuple.h
 
                 Im_list.append(Im)
 
@@ -531,9 +546,9 @@ class RDA_solver:
                 rot_t = self.para_rot_list[t].value
                 xi_t = self.para_xi_list[obs_index].value[t+1:t+2, :]
                 
-                obsA = obs['At'][t+1].value
+                obsAt = obs['A'][t+1].value
 
-                Hmt = mu_t.T @ self.car_tuple.G + lam_t.T @ obsA @ rot_t
+                Hmt = mu_t.T @ self.car_tuple.G + lam_t.T @ obsAt @ rot_t
                 self.para_xi_list[obs_index].value[t+1:t+2, :] = Hmt + xi_t    
 
                 hm_list.append(Hmt)
@@ -666,8 +681,8 @@ class RDA_solver:
             indep_trans_t = state[0:2, t+1:t+2]
             para_mu_t = para_mu[:, t+1:t+2]
 
-            para_obsA = para_obs['At'][t+1]
-            para_obsb = para_obs['bt'][t+1]
+            para_obsAt = para_obs['A'][t+1]
+            para_obsbt = para_obs['b'][t+1]
 
             para_obsA_lam_t = para_obsA_lam[t+1]
             para_obsb_lam_t = para_obsb_lam[t+1]
@@ -690,7 +705,7 @@ class RDA_solver:
             para_xi_t = para_xi[t+1:t+2, :]
             indep_rot_t = rot[t]
 
-            para_obsA = para_obs['At'][t+1]
+            para_obsAt = para_obs['A'][t+1]
 
             para_obsA_lam_t = para_obsA_lam[t+1]
 
@@ -725,10 +740,10 @@ class RDA_solver:
         for t in range(self.T):
             indep_lam_t = indep_lam[:, t+1:t+2]
             indep_mu_t = indep_mu[:, t+1:t+2]
-            para_obsb = para_obs['bt'][t+1]
+            para_obsbt = para_obs['b'][t+1]
             para_obsA_trans_t = para_obsA_trans[t+1]
 
-            Im = indep_lam_t.T @ para_obsA_trans_t - indep_lam_t.T @ para_obsb - indep_mu_t.T @ self.car_tuple.h
+            Im = indep_lam_t.T @ para_obsA_trans_t - indep_lam_t.T @ para_obsbt - indep_mu_t.T @ self.car_tuple.h
             Im_list.append(Im)
 
         Im_array = cp.hstack(Im_list)
