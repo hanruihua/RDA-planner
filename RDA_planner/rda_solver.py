@@ -15,7 +15,7 @@ from collections import namedtuple
 pool = None
 
 class RDA_solver:
-    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 5, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 5, 'cone_type': 'Rpositive'}], 
+    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 1, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 1, 'cone_type': 'Rpositive'}], 
                         iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
 
         '''
@@ -65,7 +65,7 @@ class RDA_solver:
 
         self.adjust_parameter_define(**kwargs)
 
-        self.combined_parameter_define(obstacle_template_list)
+        self.combine_parameter_define(obstacle_template_list)
 
 
     def state_variable_define(self):
@@ -140,7 +140,7 @@ class RDA_solver:
 
                 self.para_obstacle_list.append(para_obstacle)
 
-    def combined_parameter_define(self, obstacle_template_list):
+    def combine_parameter_define(self, obstacle_template_list):
         self.para_obsA_lam_list = []   # lam.T @ obsA
         self.para_obsb_lam_list = []   # lam.T @ obsb
         self.para_obsA_rot_list = []   # obs.A @ rot
@@ -151,8 +151,8 @@ class RDA_solver:
 
                 oen = ot['edge_num']
 
-                para_obsA_lam = [ cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_obsA_lam_t'+ str(t)) for t in range(self.T+1) ]
-                para_obsb_lam = [ cp.Parameter((self.T+1, 1), value=np.zeros((self.T+1, 1)), name='para_obsb_lam_t'+ str(t)) for t in range(self.T+1) ]
+                para_obsA_lam = cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_obsA_lam')
+                para_obsb_lam = cp.Parameter((self.T+1, 1), value=np.zeros((self.T+1, 1)), name='para_obsb_lam')
 
                 self.para_obsA_lam_list.append(para_obsA_lam)
                 self.para_obsb_lam_list.append(para_obsb_lam)
@@ -425,7 +425,8 @@ class RDA_solver:
     def assign_obstacle_parameter(self, obstacle_list):
         
         # self.obstacle_template_list
-        
+        self.obstacle_num = len(obstacle_list)
+
         for obs in obstacle_list:
             for para_obs in self.para_obstacle_list:
 
@@ -440,11 +441,40 @@ class RDA_solver:
                             para_obs['A'][t].value = obs.A
                             para_obs['b'][t].value = obs.b
 
+                        para_obs['assign'] = True
                         break
-        
+                        
+        for para_obs in self.para_obstacle_list:
+            para_obs['assign'] = False
+
 
     def assign_combine_parameter(self):
-        pass
+        
+
+        # self.para_obsA_lam_list = []   # lam.T @ obsA
+        # self.para_obsb_lam_list = []   # lam.T @ obsb
+        # self.para_obsA_rot_list = []   # obs.A @ rot
+        # self.para_obsA_trans_list = []   # obs.A @ trans
+
+
+        for n in range(self.obstacle_template_num):
+
+            para_lam_value = self.para_lam_list[n].value
+            para_obs = self.para_obstacle_list[n]
+
+            for t in range(self.T):
+                lam = para_lam_value[:, t+1:t+2]
+                obsA = para_obs['A'][t+1].value
+                obsb = para_obs['b'][t+1].value
+
+                rot = self.para_rot_list[t].value
+                trans = self.para_s.value[0:2, t+1:t+2]
+
+                self.para_obsA_lam_list[n].value[t+1, :] = lam.T @ obsA
+                self.para_obsb_lam_list[n].value[t+1, :] = lam.T @ obsb
+                
+                self.para_obsA_rot_list[n][t+1].value = obsA @ rot
+                self.para_obsA_trans_list[n][t+1].value = obsA @ trans
 
     # endregion
     
@@ -469,8 +499,6 @@ class RDA_solver:
             opt_state_array, opt_velocity_array, resi_dual, resi_pri = self.rda_solver()
             print('iteration ' + str(i) + ' time: ', time.time()-start_time)
             
-            print(resi_dual)
-            print(resi_pri)
             if resi_dual < self.iter_threshold and resi_pri < self.iter_threshold:
                 print('iteration early stop: '+ str(i))
                 break
@@ -495,8 +523,11 @@ class RDA_solver:
         nom_s, nom_u, nom_dis = self.su_prob_solve()
 
         self.assign_state_parameter(nom_s, nom_u, nom_dis)
+        self.assign_combine_parameter()
 
+        # if self.obstacle_num != 0:
         if self.obstacle_template_num != 0:
+            
             LamMuZ_list, resi_dual = self.LamMuZ_prob_solve()
             self.assign_dual_parameter(LamMuZ_list)
                 
@@ -684,8 +715,8 @@ class RDA_solver:
             para_obsAt = para_obs['A'][t+1]
             para_obsbt = para_obs['b'][t+1]
 
-            para_obsA_lam_t = para_obsA_lam[t+1]
-            para_obsb_lam_t = para_obsb_lam[t+1]
+            para_obsA_lam_t = para_obsA_lam[t+1:t+2, :]
+            para_obsb_lam_t = para_obsb_lam[t+1:t+2, :]
              
             Im = para_obsA_lam_t @ indep_trans_t - para_obsb_lam_t - para_mu_t.T @ self.car_tuple.h
             Im_list.append(Im)
@@ -707,7 +738,7 @@ class RDA_solver:
 
             para_obsAt = para_obs['A'][t+1]
 
-            para_obsA_lam_t = para_obsA_lam[t+1]
+            para_obsA_lam_t = para_obsA_lam[t+1:t+2, :]
 
             Hmt = mu_t.T @ self.car_tuple.G + para_obsA_lam_t @ indep_rot_t + para_xi_t
 
