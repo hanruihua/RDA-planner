@@ -17,7 +17,7 @@ env.draw_trajectory(ref_path_list, traj_type='-k') # plot path
 def main():
     
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.01])
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
     
     mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=1)
     

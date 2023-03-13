@@ -362,9 +362,9 @@ class RDA_solver:
             indep_lam_t = indep_lam[:, t+1:t+2]
             temp_list.append( cp.norm(para_obsAt.T @ indep_lam_t) )
         
-        temp_array = cp.vstack(temp_list)
-        constraints += [ temp_array <= 1 ]
+        temp = cp.max(cp.vstack(temp_list))
 
+        constraints += [ temp <= 1 ]
         # constraints += [ cp.norm(para_obs.A.T @ indep_lam, axis=0) <= 1 ]
         constraints += [ self.cone_cp_array(-indep_lam, para_obs['cone_type']) ]
         constraints += [ self.cone_cp_array(-indep_mu, self.car_tuple.cone_type) ]
@@ -422,6 +422,9 @@ class RDA_solver:
             self.para_mu_list[index].value = LamMuZ[1]
             self.para_z_list[index].value = LamMuZ[2]
 
+        a = 1
+        
+
     def assign_obstacle_parameter(self, obstacle_list):
         
         # self.obstacle_template_list
@@ -450,7 +453,6 @@ class RDA_solver:
 
     def assign_combine_parameter(self):
         
-
         # self.para_obsA_lam_list = []   # lam.T @ obsA
         # self.para_obsb_lam_list = []   # lam.T @ obsb
         # self.para_obsA_rot_list = []   # obs.A @ rot
@@ -525,9 +527,8 @@ class RDA_solver:
         self.assign_state_parameter(nom_s, nom_u, nom_dis)
         self.assign_combine_parameter()
 
-        # if self.obstacle_num != 0:
-        if self.obstacle_template_num != 0:
-            
+        if self.obstacle_num != 0:
+        # if self.obstacle_template_num != 0:
             LamMuZ_list, resi_dual = self.LamMuZ_prob_solve()
             self.assign_dual_parameter(LamMuZ_list)
                 
