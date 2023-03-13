@@ -120,9 +120,9 @@ class RDA_solver:
                 oen = ot['edge_num'] # obstacle edge number
                 ren = self.car_tuple.G.shape[0]  # robot edge number
 
-                self.para_lam_list += [ cp.Parameter((oen, self.T+1), value=np.zeros((oen, self.T+1)), name='para_lam_'+ str(oen) + '_'  + str(index)) ]
-                self.para_mu_list += [ cp.Parameter((ren, self.T+1), value=np.zeros((ren, self.T+1)), name='para_mu_'+ str(oen) + '_'  + str(index)) ]
-                self.para_z_list += [ cp.Parameter((1, self.T), nonneg=True, value=np.zeros((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
+                self.para_lam_list += [ cp.Parameter((oen, self.T+1), value=0.1*np.ones((oen, self.T+1)), name='para_lam_'+ str(oen) + '_'  + str(index)) ]
+                self.para_mu_list += [ cp.Parameter((ren, self.T+1), value=np.ones((ren, self.T+1)), name='para_mu_'+ str(oen) + '_'  + str(index)) ]
+                self.para_z_list += [ cp.Parameter((1, self.T), nonneg=True, value=0.01*np.ones((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
                 self.para_xi_list += [ cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_xi_'+ str(oen) + '_'  + str(index))]
                 self.para_zeta_list += [ cp.Parameter((1, self.T), value = np.zeros((1, self.T)), name='para_zeta_'+ str(oen) + '_' + str(index))]
 
