@@ -15,7 +15,7 @@ from collections import namedtuple
 pool = None
 
 class RDA_solver:
-    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 2, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 1, 'cone_type': 'Rpositive'}], 
+    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 10, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 1, 'cone_type': 'Rpositive'}], 
                         iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
 
         '''
@@ -256,7 +256,7 @@ class RDA_solver:
 
         prob_list = []
 
-        for obs_index in range(len(self.obstacle_list)):
+        for obs_index in range(self.obstacle_template_num):
 
             indep_lam = self.indep_lam_list[obs_index]
             indep_mu = self.indep_mu_list[obs_index]
@@ -619,7 +619,7 @@ class RDA_solver:
             LamMuZ_list = pool.map(RDA_solver.solve_parallel, input_args)
 
         else:
-            for obs_index in range(len(self.obstacle_template_list)):
+            for obs_index in range(self.obstacle_template_num):
                 prob = self.prob_LamMuZ_list[obs_index]
                 input_args.append((prob, obs_index))
             
