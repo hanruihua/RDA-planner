@@ -15,7 +15,7 @@ from collections import namedtuple
 pool = None
 
 class RDA_solver:
-    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 10, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 1, 'cone_type': 'Rpositive'}], 
+    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 1, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 1, 'cone_type': 'Rpositive'}], 
                         iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
 
         '''
@@ -239,17 +239,21 @@ class RDA_solver:
         return prob_list
 
     def init_prob_LamMuZ(self, kwargs):
-        global prob_LamMuZ_list, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis
+        global prob_LamMuZ_list, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, para_obsA_rot_list, para_obsA_trans_list, para_obstacle_list
 
         para_xi_list = self.para_xi_list
         para_zeta_list = self.para_zeta_list
         para_s = self.para_s
         para_rot_list = self.para_rot_list
-        para_dis = self.para_dis
+        para_dis = self.para_dis 
 
-        prob_LamMuZ_list = self.construct_LamMuZ_prob_parallel(para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, **kwargs)
+        para_obsA_rot_list = self.para_obsA_rot_list
+        para_obsA_trans_list = self.para_obsA_trans_list
+        para_obstacle_list = self.para_obstacle_list
 
-    def construct_LamMuZ_prob_parallel(self, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, **kwargs):
+        prob_LamMuZ_list = self.construct_LamMuZ_prob_parallel(para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, para_obstacle_list, para_obsA_rot_list, para_obsA_trans_list, **kwargs)
+
+    def construct_LamMuZ_prob_parallel(self, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, para_obstacle_list, para_obsA_rot_list, para_obsA_trans_list, **kwargs):
 
         ro1 = kwargs.get('ro1', 200)
         ro2 = kwargs.get('ro2', 1) 
@@ -263,10 +267,13 @@ class RDA_solver:
             indep_z = self.indep_z_list[obs_index]
 
             para_xi = para_xi_list[obs_index]
-            obs = self.obstacle_list[obs_index]
+            para_obs = para_obstacle_list[obs_index]
+            para_obsA_rot = para_obsA_rot_list[obs_index]
+            para_obsA_trans = para_obsA_trans_list[obs_index]
+
             para_zeta = para_zeta_list[obs_index]
 
-            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, obs, self.T, ro1, ro2)
+            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, ro1, ro2)
             
             prob = cp.Problem(cp.Minimize(cost), constraints)
             prob_list.append(prob)
@@ -421,8 +428,6 @@ class RDA_solver:
             self.para_mu_list[index].value = LamMuZ[1]
             self.para_z_list[index].value = LamMuZ[2]
 
-        a = 1
-        
 
     def assign_obstacle_parameter(self, obstacle_list):
         
@@ -489,6 +494,8 @@ class RDA_solver:
         
         self.para_ref_s.value = np.hstack(ref_states)[0:3, :]
         self.para_ref_speed.value = ref_speed
+
+        # random.shuffle(obstacle_list)
 
         self.assign_state_parameter(nom_s, nom_u, self.para_dis.value)
         self.assign_obstacle_parameter(obstacle_list)
@@ -603,7 +610,7 @@ class RDA_solver:
         
         input_args = []
         if self.process_num > 1:
-            for obs_index in range(len(self.obstacle_list)):
+            for obs_index in range(self.obstacle_template_num):
 
                 nom_s = self.para_s.value
                 nom_dis = self.para_dis.value
@@ -614,7 +621,11 @@ class RDA_solver:
                 nom_mu = self.para_mu_list[obs_index].value
                 nom_z = self.para_z_list[obs_index].value
                 
-                input_args.append((obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta))
+                nom_obs = self.para_obstacle_list[obs_index]
+                nom_obsA_rot = self.para_obsA_rot_list[obs_index]
+                nom_para_obsA_trans = self.para_obsA_trans_list[obs_index]
+
+                input_args.append((obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta, nom_obs, nom_obsA_rot, nom_para_obsA_trans))
             
             LamMuZ_list = pool.map(RDA_solver.solve_parallel, input_args)
 
@@ -636,7 +647,7 @@ class RDA_solver:
 
     def solve_parallel(input):
         
-        obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta = input
+        obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta, nom_obs, nom_obsA_rot, nom_para_obsA_trans = input
 
         prob = prob_LamMuZ_list[obs_index]
 
@@ -646,11 +657,18 @@ class RDA_solver:
         para_xi_list[obs_index].value = nom_xi
         para_zeta_list[obs_index].value = nom_zeta
 
+        para_obstacle_list[obs_index]['A'] = nom_obs['A']
+        para_obstacle_list[obs_index]['b'] = nom_obs['b']
+
         for t in range(receding):
             nom_st = nom_s[:, t:t+1]
             nom_phi = nom_st[2, 0]
             para_rot_list[t].value = np.array([[cos(nom_phi), -sin(nom_phi)],  [sin(nom_phi), cos(nom_phi)]])
-      
+
+            para_obsA_rot_list[obs_index][t+1].value = nom_obsA_rot[t+1].value
+            para_obsA_trans_list[obs_index][t+1].value = nom_para_obsA_trans[t+1].value
+        
+
         prob.solve(solver=cp.ECOS)
 
         for variable in prob.variables():
@@ -702,7 +720,6 @@ class RDA_solver:
         
     # endregion
 
-    
     # region: formula， Hm, Im
     def Im_su(self, state, distance, para_lam, para_mu, para_z, para_zeta, para_obs, para_obsA_lam, para_obsb_lam):
         

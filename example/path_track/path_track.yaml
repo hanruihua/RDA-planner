@@ -19,15 +19,13 @@ robots:
   
 obstacles:
 
-  - type: 'obstacle_circle'
-    number: 10
-    distribute: {mode: 'manual', states: [[20, 34], [31, 38], [10, 20], [41, 25], [20, 13], [16, 26], [10, 24], [18, 20], [16, 26], [19, 26], [10, 30]], shapes: [1.5, 1.0, 1.0]}  # shapes: radiuses 
-    
   - type: 'obstacle_polygon'
     number: 1
     distribute: {mode: 'manual', 
                  states: [[0, 0, 0], [0, 0, 0]],
                  shapes: [ [[31, 24], [33, 24], [33, 28], [31, 28]], [[5, 46], [15, 46], [15, 50], [5, 50]] ] } 
 
-
+  - type: 'obstacle_circle'
+    number: 1
+    distribute: {mode: 'manual', states: [[20, 34], [31, 38], [10, 20], [41, 25], [20, 13], [16, 26], [10, 24], [18, 20], [16, 26], [19, 26], [10, 30]], shapes: [1.5, 1.0, 1.0]}  # shapes: radiuses 
 
