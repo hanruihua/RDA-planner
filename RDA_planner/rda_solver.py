@@ -267,11 +267,11 @@ class RDA_solver:
             indep_z = self.indep_z_list[obs_index]
 
             para_xi = para_xi_list[obs_index]
+            para_zeta = para_zeta_list[obs_index]
+
             para_obs = para_obstacle_list[obs_index]
             para_obsA_rot = para_obsA_rot_list[obs_index]
             para_obsA_trans = para_obsA_trans_list[obs_index]
-
-            para_zeta = para_zeta_list[obs_index]
 
             cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, ro1, ro2)
             
@@ -623,9 +623,9 @@ class RDA_solver:
                 
                 nom_obs = self.para_obstacle_list[obs_index]
                 nom_obsA_rot = self.para_obsA_rot_list[obs_index]
-                nom_para_obsA_trans = self.para_obsA_trans_list[obs_index]
+                nom_obsA_trans = self.para_obsA_trans_list[obs_index]
 
-                input_args.append((obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta, nom_obs, nom_obsA_rot, nom_para_obsA_trans))
+                input_args.append((obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta, nom_obs, nom_obsA_rot, nom_obsA_trans))
             
             LamMuZ_list = pool.map(RDA_solver.solve_parallel, input_args)
 
@@ -647,7 +647,7 @@ class RDA_solver:
 
     def solve_parallel(input):
         
-        obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta, nom_obs, nom_obsA_rot, nom_para_obsA_trans = input
+        obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta, nom_obs, nom_obsA_rot, nom_obsA_trans = input
 
         prob = prob_LamMuZ_list[obs_index]
 
@@ -666,7 +666,7 @@ class RDA_solver:
             para_rot_list[t].value = np.array([[cos(nom_phi), -sin(nom_phi)],  [sin(nom_phi), cos(nom_phi)]])
 
             para_obsA_rot_list[obs_index][t+1].value = nom_obsA_rot[t+1].value
-            para_obsA_trans_list[obs_index][t+1].value = nom_para_obsA_trans[t+1].value
+            para_obsA_trans_list[obs_index][t+1].value = nom_obsA_trans[t+1].value
         
 
         prob.solve(solver=cp.ECOS)
