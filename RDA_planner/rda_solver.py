@@ -462,11 +462,19 @@ class RDA_solver:
         # self.para_obsA_rot_list = []   # obs.A @ rot
         # self.para_obsA_trans_list = []   # obs.A @ trans
 
-
         for n in range(self.obstacle_template_num):
 
             para_lam_value = self.para_lam_list[n].value
             para_obs = self.para_obstacle_list[n]
+
+            obsA_list = [ OA.value for OA in para_obs['A'] ] 
+            obsb_list = [ Ob.value for Ob in para_obs['b'] ] 
+            
+            obsA_array = np.hstack(obsA_list)
+            obsA_array2 = np.array(obsA_list)
+            obsb_array = np.hstack(obsb_list)
+
+            temp = obsA_array2.T
 
             for t in range(self.T):
                 lam = para_lam_value[:, t+1:t+2]
@@ -528,17 +536,28 @@ class RDA_solver:
         
         resi_dual, resi_pri = 0, 0
         
+        start_time = time.time()
         nom_s, nom_u, nom_dis = self.su_prob_solve()
-
+        print('- su problem solve:', time.time() - start_time)
+        
+        start_time = time.time()
         self.assign_state_parameter(nom_s, nom_u, nom_dis)
+        print('- other1.1:', time.time() - start_time)
+        start_time = time.time()
         self.assign_combine_parameter()
+        print('- other1.2:', time.time() - start_time)
 
         if self.obstacle_num != 0:
         # if self.obstacle_template_num != 0:
+            start_time = time.time()
             LamMuZ_list, resi_dual = self.LamMuZ_prob_solve()
+            print('- LamMu problem solve:', time.time() - start_time)
+
+            start_time = time.time()
             self.assign_dual_parameter(LamMuZ_list)
             self.assign_combine_parameter()
-                
+            print('- other2:', time.time() - start_time)
+
             resi_pri = self.update_xi()
             self.update_zeta()
             
