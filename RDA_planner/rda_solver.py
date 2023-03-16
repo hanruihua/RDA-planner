@@ -545,12 +545,10 @@ class RDA_solver:
         nom_s, nom_u, nom_dis = self.su_prob_solve()
         print('- su problem solve:', time.time() - start_time)
         
-        start_time = time.time()
         self.assign_state_parameter(nom_s, nom_u, nom_dis)
-        print('- other1.1:', time.time() - start_time)
         start_time = time.time()
         self.assign_combine_parameter_stateobs()
-        print('- other1.2:', time.time() - start_time)
+        print('- other1:', time.time() - start_time)
 
         if self.obstacle_num != 0:
         # if self.obstacle_template_num != 0:
@@ -558,10 +556,8 @@ class RDA_solver:
             LamMuZ_list, resi_dual = self.LamMuZ_prob_solve()
             print('- LamMu problem solve:', time.time() - start_time)
 
-            start_time = time.time()
             self.assign_dual_parameter(LamMuZ_list)
             self.assign_combine_parameter_lamobs()
-            print('- other2:', time.time() - start_time)
 
             resi_pri = self.update_xi()
             self.update_zeta()
