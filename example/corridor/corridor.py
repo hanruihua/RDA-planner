@@ -27,7 +27,8 @@ if __name__ == '__main__':
     # obs_list = env.get_obstacle_list()
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
-    mpc_opt = MPC(car_tuple, ref_path_list, slack_gain=8, sample_time=env.step_time)
+    obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 0, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 6, 'cone_type': 'Rpositive'}]
+    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, obstacle_template_list=obstacle_template_list)
     
     for i in range(500):   
         
@@ -39,11 +40,11 @@ if __name__ == '__main__':
         env.step(opt_vel)
         env.render(show_traj=True, show_trail=True)
         
-        if env.done():
-            break
-        
         if info['arrive']:
             print('arrive at the goal')
+
+        if env.done():
+            print('Done')
             break
 
     env.end(ani_name='corridor', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
