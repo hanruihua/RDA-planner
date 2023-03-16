@@ -55,7 +55,17 @@ class MPC:
             self.curve_list = self.split_path(self.ref_path)
             self.curve_index = 0
 
-    def control(self, state,  ref_speed=5, obs_list=[],**kwargs):
+    def control(self, state,  ref_speed=5, obstacle_list=[],**kwargs):
+
+        '''
+        state: the robot state (x, y, theta) of current time, 3*1 vector 
+        ref_speed: the reference speed, scalar value
+        obstacle_list: a list of obstacle
+            obstacle: (vertex point; cone_type, )
+        '''
+
+
+
 
         if np.shape(state)[0] > 3:
             state = state[0:3]
@@ -68,6 +78,9 @@ class MPC:
             gear_flag = 1
 
         state_pre_array, ref_traj_list, self.cur_index = self.pre_process(state, cur_ref_path, self.cur_index, ref_speed, **kwargs)
+
+
+
 
         u_opt_array, info = self.rda.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, gear_flag*ref_speed, obs_list, **kwargs)
 

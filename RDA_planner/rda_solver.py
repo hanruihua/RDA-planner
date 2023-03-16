@@ -440,7 +440,11 @@ class RDA_solver:
                 para_obs_edge_num = para_obs['edge_num']
 
                 if isinstance(obs.A, list):
-                    pass
+                    if obs_edge_num == para_obs_edge_num and para_obs['assign'] is False:
+                        for t in range(len(para_obs['A'])):
+                            para_obs['A'][t].value = obs.A[t]
+                            para_obs['b'][t].value = obs.b[t]
+                            
                 else:
                     if obs_edge_num == para_obs_edge_num and para_obs['assign'] is False:
                         for t in range(len(para_obs['A'])):
