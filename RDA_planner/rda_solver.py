@@ -23,7 +23,6 @@ class RDA_solver:
             edge_num: number of convex obstacle edges; 
             obstacle_num: number of convex obstacles; 
             cone_type: Rpositive, norm2
-
         '''
 
         # setting
@@ -194,7 +193,7 @@ class RDA_solver:
     def construct_su_prob(self, **kwargs):
         
         ws = kwargs.get('ws', 1)
-        wu = kwargs.get('ws', 1)
+        wu = kwargs.get('wu', 1)
 
         ro1 = kwargs.get('ro1', 200)
         ro2 = kwargs.get('ro2', 1)
@@ -503,7 +502,7 @@ class RDA_solver:
         # obstacle_list: a list of obstacle instance
         #   obstacle: (A, b, cone_type)
 
-        start_time = time.time()
+        # start_time = time.time()
         
         self.para_ref_s.value = np.hstack(ref_states)[0:3, :]
         self.para_ref_speed.value = ref_speed
@@ -541,20 +540,20 @@ class RDA_solver:
         
         resi_dual, resi_pri = 0, 0
         
-        start_time = time.time()
+        # start_time = time.time()
         nom_s, nom_u, nom_dis = self.su_prob_solve()
-        print('- su problem solve:', time.time() - start_time)
+        # print('- su problem solve:', time.time() - start_time)
         
         self.assign_state_parameter(nom_s, nom_u, nom_dis)
-        start_time = time.time()
+        # start_time = time.time()
         self.assign_combine_parameter_stateobs()
-        print('- other1:', time.time() - start_time)
+        # print('- other1:', time.time() - start_time)
 
         if self.obstacle_num != 0:
         # if self.obstacle_template_num != 0:
-            start_time = time.time()
+            # start_time = time.time()
             LamMuZ_list, resi_dual = self.LamMuZ_prob_solve()
-            print('- LamMu problem solve:', time.time() - start_time)
+            # print('- LamMu problem solve:', time.time() - start_time)
 
             self.assign_dual_parameter(LamMuZ_list)
             self.assign_combine_parameter_lamobs()
@@ -689,7 +688,6 @@ class RDA_solver:
             para_obstacle_list[obs_index]['A'][t+1].value = nom_obs_A[t+1]
             para_obstacle_list[obs_index]['b'][t+1].value = nom_obs_b[t+1]
         
-
         prob.solve(solver=cp.ECOS)
 
         for variable in prob.variables():

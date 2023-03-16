@@ -1,3 +1,9 @@
+
+'''
+RDA MPC 
+Author: Han Ruihua
+'''
+
 import numpy as np
 from math import inf, sqrt, pi, sin, cos, tan
 from RDA_planner.rda_solver import RDA_solver
