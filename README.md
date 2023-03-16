@@ -8,7 +8,7 @@ The source code of the paper "RDA: An Accelerated Collision Free Motion Planner 
 - Python >= 3.8
 - numpy
 - cvxpy
-- [ir_sim==1.1.7](https://github.com/hanruihua/ir_sim): A python based 2d robot simulator for robotics navigation algorithm. 
+- [ir_sim==1.1.8](https://github.com/hanruihua/ir_sim): A python based 2d robot simulator for robotics navigation algorithm. 
 - [GenerateCurveTool](https://github.com/hanruihua/GenerateCurveTool): A tool of generating the common curves from way points for the robot path planning, including dubins path, reeds shepp, etc.
 
 ## Installation 
