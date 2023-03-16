@@ -455,7 +455,7 @@ class RDA_solver:
             para_obs['assign'] = False
 
 
-    def assign_combine_parameter(self):
+    def assign_combine_parameter_lamobs(self):
         
         # self.para_obsA_lam_list = []   # lam.T @ obsA
         # self.para_obsb_lam_list = []   # lam.T @ obsb
@@ -467,25 +467,30 @@ class RDA_solver:
             para_lam_value = self.para_lam_list[n].value
             para_obs = self.para_obstacle_list[n]
 
-            obsA_list = [ OA.value for OA in para_obs['A'] ] 
-            obsb_list = [ Ob.value for Ob in para_obs['b'] ] 
-            
-            obsA_array = np.hstack(obsA_list)
-            obsA_array2 = np.array(obsA_list)
-            obsb_array = np.hstack(obsb_list)
-
-            temp = obsA_array2.T
-
             for t in range(self.T):
                 lam = para_lam_value[:, t+1:t+2]
                 obsA = para_obs['A'][t+1].value
                 obsb = para_obs['b'][t+1].value
 
-                rot = self.para_rot_list[t].value
-                trans = self.para_s.value[0:2, t+1:t+2]
-
                 self.para_obsA_lam_list[n].value[t+1, :] = lam.T @ obsA
                 self.para_obsb_lam_list[n].value[t+1, :] = lam.T @ obsb
+                    
+    def assign_combine_parameter_stateobs(self):
+        
+        # self.para_obsA_lam_list = []   # lam.T @ obsA
+        # self.para_obsb_lam_list = []   # lam.T @ obsb
+        # self.para_obsA_rot_list = []   # obs.A @ rot
+        # self.para_obsA_trans_list = []   # obs.A @ trans
+
+        for n in range(self.obstacle_template_num):
+
+            para_obs = self.para_obstacle_list[n]
+ 
+            for t in range(self.T):
+                obsA = para_obs['A'][t+1].value
+
+                rot = self.para_rot_list[t].value
+                trans = self.para_s.value[0:2, t+1:t+2]
                 
                 self.para_obsA_rot_list[n][t+1].value = obsA @ rot
                 self.para_obsA_trans_list[n][t+1].value = obsA @ trans
@@ -544,7 +549,7 @@ class RDA_solver:
         self.assign_state_parameter(nom_s, nom_u, nom_dis)
         print('- other1.1:', time.time() - start_time)
         start_time = time.time()
-        self.assign_combine_parameter()
+        self.assign_combine_parameter_stateobs()
         print('- other1.2:', time.time() - start_time)
 
         if self.obstacle_num != 0:
@@ -555,7 +560,7 @@ class RDA_solver:
 
             start_time = time.time()
             self.assign_dual_parameter(LamMuZ_list)
-            self.assign_combine_parameter()
+            self.assign_combine_parameter_lamobs()
             print('- other2:', time.time() - start_time)
 
             resi_pri = self.update_xi()
