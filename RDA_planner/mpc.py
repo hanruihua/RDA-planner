@@ -99,7 +99,7 @@ class MPC:
         self.cur_index = 0
 
     def update_parameter(self, **kwargs):
-        self.rda.update_adjust_parameter(**kwargs)
+        self.rda.assign_adjust_parameter(**kwargs)
 
     def split_path(self, ref_path):
         # split path by gear
