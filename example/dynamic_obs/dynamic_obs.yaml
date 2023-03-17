@@ -25,10 +25,10 @@ obstacles:
                   shapes: [ [[31, 24], [33, 24], [33, 28], [31, 28]], [[5, 46], [15, 46], [15, 50], [5, 50]] ] } 
 
   - type: 'obstacle_circle'
-    number: 2
-    distribute: {mode: 'manual', states: [[20, 34], [31, 38], [10, 20], [41, 25], [20, 13], [16, 26], [10, 24], [18, 20], [16, 26], [19, 26], [10, 30]], shapes: [1.5, 1.0, 1.0]}  # shapes: radiuses 
+    number: 5
+    distribute: {mode: 'manual', states: [[31, 30], [19, 30], [10, 25], [41, 25], [20, 20], [16, 26], [10, 24], [18, 20], [16, 26], [19, 26], [10, 30]], shapes: [0.5]}  # shapes: radiuses 
     # dynamic: {sport: 'default', goals: [[4, 1], [9, 9]], vel: 0.3}
-    dynamic: {sport: 'wander', sport_range: [0, 0, 10, 10], vel: 1.0}
+    dynamic: {sport: 'wander', sport_range: [0, 0, 10, 10], vel: 0.5}
 
 
   

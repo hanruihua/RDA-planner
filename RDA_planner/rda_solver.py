@@ -436,16 +436,21 @@ class RDA_solver:
         for obs in obstacle_list:
             for para_obs in self.para_obstacle_list:
 
-                obs_edge_num = obs.A.shape[0]
                 para_obs_edge_num = para_obs['edge_num']
 
                 if isinstance(obs.A, list):
+                    obs_edge_num = obs.A[0].shape[0]
                     if obs_edge_num == para_obs_edge_num and para_obs['assign'] is False:
                         for t in range(len(para_obs['A'])):
                             para_obs['A'][t].value = obs.A[t]
                             para_obs['b'][t].value = obs.b[t]
-                            
+
+                        para_obs['assign'] = True
+                        break
+                           
                 else:
+                    obs_edge_num = obs.A.shape[0]
+
                     if obs_edge_num == para_obs_edge_num and para_obs['assign'] is False:
                         for t in range(len(para_obs['A'])):
                             para_obs['A'][t].value = obs.A
@@ -460,11 +465,6 @@ class RDA_solver:
 
     def assign_combine_parameter_lamobs(self):
         
-        # self.para_obsA_lam_list = []   # lam.T @ obsA
-        # self.para_obsb_lam_list = []   # lam.T @ obsb
-        # self.para_obsA_rot_list = []   # obs.A @ rot
-        # self.para_obsA_trans_list = []   # obs.A @ trans
-
         for n in range(self.obstacle_template_num):
 
             para_lam_value = self.para_lam_list[n].value
