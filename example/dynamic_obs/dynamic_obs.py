@@ -8,7 +8,7 @@ from ir_sim.env import EnvBase
 from RDA_planner.mpc import MPC
 
 # environment
-env = EnvBase('dynamic_obs.yaml', save_ani=False, display=True, full=False)
+env = EnvBase('dynamic_obs.yaml', save_ani=True, display=True, full=True)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
 
 # saved ref path
@@ -21,9 +21,9 @@ def main():
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 1.0])
     
-    obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 5, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 0, 'cone_type': 'Rpositive'}]  # define the number of obstacles in advance
+    obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 7, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 0, 'cone_type': 'Rpositive'}]  # define the number of obstacles in advance
 
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=3, ro1=200, obstacle_template_list=obstacle_template_list, max_sd=1.0, min_sd=0.5, slack_gain=20, ws=1.0, wu=1.0)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=5, iter_num=3, obstacle_template_list=obstacle_template_list, min_sd=0.5, wu=0.2)
     
     for i in range(500):   
         
@@ -42,7 +42,7 @@ def main():
             print('arrive at the goal')
             break
 
-    env.end(ani_name='path_track', show_traj=True, show_trail=True, ending_time=3, ani_kwargs={'subrectangles':True})
+    env.end(ani_name='dynamic_obs', show_traj=True, show_trail=True, ending_time=3, ani_kwargs={'subrectangles':True})
     
 if __name__ == '__main__':
     main()
