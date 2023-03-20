@@ -8,7 +8,7 @@ from ir_sim.env import EnvBase
 from RDA_planner.mpc import MPC
 
 # environment
-env = EnvBase('dynamic_obs.yaml', save_ani=True, display=True, full=True)
+env = EnvBase('dynamic_obs.yaml', save_ani=False, display=True, full=False)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
 
 # saved ref path
