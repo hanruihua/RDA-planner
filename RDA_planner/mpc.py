@@ -1,9 +1,20 @@
+
+'''
+RDA MPC 
+Author: Han Ruihua
+'''
+
 import numpy as np
 from math import inf, sqrt, pi, sin, cos, tan
 from RDA_planner.rda_solver import RDA_solver
+import time
+
+from collections import namedtuple
+
+rdaobs = namedtuple('rdaobs', 'A b cone_type')
 
 class MPC:
-    def __init__(self, car_tuple, obstacle_list, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, **kwargs) -> None:
+    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, **kwargs) -> None:
 
         '''
         Agruments 
@@ -24,6 +35,7 @@ class MPC:
             *ro1 (200): The penalty parameter in ADMM.
             ro2 (1): The penalty parameter in ADMM.
             init_vel ([0,0]): The initial velocity of the car robot.
+            rda_obstacle: if True, the obstacle list can be transported to rda_solver directly, otherwise, it should be converted.
         '''
         
         self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed max_acce'
@@ -37,14 +49,27 @@ class MPC:
         # flag
         self.cur_index = 0
         self.ref_path = ref_path
-        self.rda = RDA_solver(receding, car_tuple, obstacle_list, iter_num, sample_time, **kwargs)
+
+        start_time = time.time()
+        self.rda = RDA_solver(receding, car_tuple, iter_num=iter_num, **kwargs)
+        print( time.time() - start_time)
+
         self.enable_reverse = enable_reverse
+
+        self.rda_obstacle = rda_obstacle
 
         if enable_reverse:
             self.curve_list = self.split_path(self.ref_path)
             self.curve_index = 0
 
-    def control(self, state, ref_speed=6, **kwargs):
+    def control(self, state,  ref_speed=5, obstacle_list=[],**kwargs):
+
+        '''
+        state: the robot state (x, y, theta) of current time, 3*1 vector 
+        ref_speed: the reference speed, scalar value
+        obstacle_list: a list of obstacle
+            obstacle: (center, radius, vertex, cone_type, velocity)
+        '''
 
         if np.shape(state)[0] > 3:
             state = state[0:3]
@@ -58,7 +83,12 @@ class MPC:
 
         state_pre_array, ref_traj_list, self.cur_index = self.pre_process(state, cur_ref_path, self.cur_index, ref_speed, **kwargs)
 
-        u_opt_array, info = self.rda.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, gear_flag*ref_speed, **kwargs)
+        if not self.rda_obstacle:
+            rda_obs_list = self.convert_rda_obstacle(obstacle_list)
+        else:
+            rda_obs_list = obstacle_list
+        
+        u_opt_array, info = self.rda.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, gear_flag*ref_speed, rda_obs_list, **kwargs)
 
         if self.cur_index == len(cur_ref_path) - 1:
 
@@ -83,12 +113,26 @@ class MPC:
 
         return u_opt_array[:, 0:1], info
 
+    def convert_rda_obstacle(self, obstacle_list):
+        rda_obs_list = []
+
+        for obs in obstacle_list:
+            if obs.cone_type == 'norm2':
+                A, b = self.convert_inequal_circle(obs.center, obs.radius, obs.velocity)
+            elif obs.cone_type == 'Rpositive':
+                A, b = self.convert_inequal_polygon(obs.vertex, obs.velocity)
+
+            rda_obs = rdaobs(A, b, obs.cone_type)
+            rda_obs_list.append(rda_obs)
+            
+        return rda_obs_list
+
     def update_ref_path(self, ref_path):
         self.ref_path = ref_path
         self.cur_index = 0
 
     def update_parameter(self, **kwargs):
-        self.rda.update_adjust_parameter(**kwargs)
+        self.rda.assign_adjust_parameter(**kwargs)
 
     def split_path(self, ref_path):
         # split path by gear
@@ -244,3 +288,68 @@ class MPC:
             radian = radian + 2 * pi
 
         return radian
+
+
+    def convert_inequal_circle(self, center, radius, velocity=np.zeros((2, 1))):
+        # center: 2*1
+        # radius: scalar
+        
+        if np.linalg.norm(velocity) <= 0.01:
+            A = np.array([ [1, 0], [0, 1], [0, 0] ])
+            b = np.row_stack((center, -radius* np.ones((1,1))))
+        else:
+            A = []
+            b = []
+            for t in range(self.receding+1):
+                next = center + velocity * (t * self.dt)
+                temp_A = np.array([ [1, 0], [0, 1], [0, 0] ])
+                temp_b = np.row_stack((next, -radius* np.ones((1,1))))
+
+                A.append(temp_A)
+                b.append(temp_b)
+
+        return A, b
+        
+
+    def convert_inequal_polygon(self, vertex, velocity=np.zeros((2, 1))):
+        # vertex: 2*4 matrix
+
+        if np.linalg.norm(velocity) <= 0.01:
+            A, b = self.gen_inequal_global(vertex)
+        else:
+            A, b = [], []
+
+            for t in range(self.receding+1): 
+                next = vertex + velocity * (t * self.dt)
+                temp_A, temp_b = self.gen_inequal_global(next)
+                A.append(temp_A)
+                b.append(temp_b)
+
+        return A, b
+
+    def gen_inequal_global(self, vertex):
+
+        temp_vertex = np.c_[vertex, vertex[0:2, 0]]   
+
+        point_num = vertex.shape[1]
+        
+        A = np.zeros((point_num, 2))
+        b = np.zeros((point_num, 1))
+
+        for i in range(point_num):
+            cur_p = temp_vertex[0:2, i]
+            next_p = temp_vertex[0:2, i+1]
+
+            diff = next_p - cur_p
+
+            ax = diff[1]
+            by = -diff[0]
+            c = ax * cur_p[0] + by * cur_p[1]
+
+            A[i, 0] = ax
+            A[i, 1] = by
+            b[i, 0] = c
+
+        return A, b 
+
+

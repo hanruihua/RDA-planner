@@ -1,77 +1,93 @@
+
+'''
+RDA solver 
+Author: Han Ruihua
+'''
+
 import cvxpy as cp
 import numpy as np
 from pathos.multiprocessing import Pool
 from math import sin, cos, tan, inf
 import time
+from collections import namedtuple
 
+# para_obstacle = namedtuple('obstacle', ['At', 'bt', 'cone_type'])
 pool = None
 
 class RDA_solver:
-    def __init__(self, receding, car_tuple, obstacle_list, iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
+    def __init__(self, receding, car_tuple, obstacle_template_list=[{'edge_num': 3, 'obstacle_num': 10, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 1, 'cone_type': 'Rpositive'}], 
+                        iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
+
+        '''
+        obstacle_template_dict: the template for the obstacles to construct the problem, 
+            edge_num: number of convex obstacle edges; 
+            obstacle_num: number of convex obstacles; 
+            cone_type: Rpositive, norm2
+        '''
 
         # setting
         self.T = receding
         self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed max_acce'
         self.L = car_tuple.wheelbase
         self.max_speed = np.c_[self.car_tuple.max_speed]
-        self.obstacle_list = obstacle_list
+        self.obstacle_template_list = obstacle_template_list
+        self.obstacle_template_num = sum([ ot['obstacle_num'] for ot in obstacle_template_list])
+
         self.iter_num = iter_num
         self.dt = step_time
         self.acce_bound = np.c_[car_tuple.max_acce] * self.dt 
         self.iter_threshold = iter_threshold
 
-        # independ variable
-        self.definition(obstacle_list)
+        # independ variable and cvxpy parameters definition
+        self.definition(obstacle_template_list, **kwargs)
 
         # flag
         # self.init_flag = True
         self.process_num = process_num
 
         if process_num == 1:
-            self.prob_su, self.prob_LamMuZ_list = self.construct_problem(**kwargs)
+            self.construct_problem(**kwargs)
         elif process_num > 1:
             global pool 
-            self.prob_su = self.update_su_prob(**kwargs)
-            pool = Pool(processes=process_num, initializer=self.init_prob_LamMuZ, initargs=(kwargs, )) 
+            pool = self.construct_mp_problem(process_num, **kwargs)
+    
+    # region: definition of variables and parameters
+    def definition(self, obstacle_template_list, **kwargs):
 
-
-    def init_prob_LamMuZ(self, kwargs):
-        global prob_LamMuZ_list, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis
-
-        para_xi_list = self.para_xi_list
-        para_zeta_list = self.para_zeta_list
-        para_s = self.para_s
-        para_rot_list = self.para_rot_list
-        para_dis = self.para_dis
-
-        prob_LamMuZ_list = self.update_LamMuZ_prob_parallel(para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, **kwargs)
-
-    def definition(self, obstacle_list):
         self.state_variable_define()
-        self.obstacle_variable_define(obstacle_list)
+        self.dual_variable_define(obstacle_template_list)
         
         self.state_parameter_define()
-        self.obstacle_parameter_define(obstacle_list)
+        self.dual_parameter_define(obstacle_template_list)
 
-        self.adjust_parameter()
+        self.obstacle_parameter_define(obstacle_template_list)
 
-    def obstacle_variable_define(self, obstacle_list):
+        self.adjust_parameter_define(**kwargs)
 
-        self.obstacle_list = obstacle_list
+        self.combine_parameter_define(obstacle_template_list)
 
-        # decision variables
-        self.indep_lam_list = [ cp.Variable((obs.A.shape[0], self.T+1), name='lam_'+ str(obs_index)) for obs_index, obs in enumerate(obstacle_list)]
-        self.indep_mu_list = [ cp.Variable((self.car_tuple.G.shape[0], self.T+1), name='mu_'+ str(obs_index)) for obs_index, obs in enumerate(obstacle_list) ]
-        self.indep_z_list = [ cp.Variable((1, self.T), nonneg=True, name='z_'+ str(obs_index) ) for obs_index, obs in enumerate(obstacle_list) ]
-        
     def state_variable_define(self):
         # decision variables
         self.indep_s = cp.Variable((3, self.T+1), name='state')
         self.indep_u = cp.Variable((2, self.T), name='vel')
         self.indep_dis = cp.Variable((1, self.T), name='distance', nonneg=True)
 
-        self.indep_rot_list = [cp.Variable((2, 2), name='rot_'+str(t))  for t in range(self.T)]
+        self.indep_rot_list = [cp.Variable((2, 2), name='rot_'+str(t))  for t in range(self.T)]  # the variable of rotation matrix
 
+    def dual_variable_define(self, obstacle_template_list):
+        
+        '''
+        define the indep_lam; indep_mu; indep_z
+        ''' 
+        self.indep_lam_list = []
+        self.indep_mu_list = []
+        self.indep_z_list = []
+
+        for ot in obstacle_template_list:
+            self.indep_lam_list += [ cp.Variable((ot['edge_num'], self.T+1), name='lam_'+ str(ot['edge_num']) + '_' + str(index)) for index in range(ot['obstacle_num'])]
+            self.indep_mu_list += [ cp.Variable((self.car_tuple.G.shape[0], self.T+1), name='mu_'+ str(ot['edge_num']) + '_' + str(index)) for index in range(ot['obstacle_num'])]
+            self.indep_z_list += [ cp.Variable((1, self.T), nonneg=True, name='z_'+ str(ot['edge_num']) + '_' + str(index)) for index in range(ot['obstacle_num'])]
+    
     def state_parameter_define(self):
         
         self.para_ref_s = cp.Parameter((3, self.T+1), name='para_ref_state')
@@ -89,37 +105,416 @@ class RDA_solver:
         self.para_B_list = [ cp.Parameter((3, 2), name='para_B_'+str(t)) for t in range(self.T)]
         self.para_C_list = [ cp.Parameter((3, 1), name='para_C_'+str(t)) for t in range(self.T)]
 
-    def obstacle_parameter_define(self, obstacle_list):
+    def dual_parameter_define(self, obstacle_template_list):
+        # define the parameters related to obstacles
+        self.para_lam_list = []
+        self.para_mu_list = []
+        self.para_z_list = []
+        self.para_xi_list = []
+        self.para_zeta_list = []
 
-        self.para_lam_list =  [ cp.Parameter((obs.A.shape[0], self.T+1), value=0.1*np.ones((obs.A.shape[0], self.T+1)), name='para_lam_'+str(obs_index)) for obs_index, obs in enumerate(obstacle_list) ]
-        self.para_mu_list = [ cp.Parameter((self.car_tuple.G.shape[0], self.T+1), value=np.ones((self.car_tuple.G.shape[0], self.T+1)), name='para_mu_'+str(obs_index)) for obs_index, obs in enumerate(obstacle_list) ]
-        self.para_z_list = [ cp.Parameter((1, self.T), nonneg=True, value=0.01*np.ones((1, self.T)), name='para_z_'+str(obs_index)) for obs_index, obs in enumerate(obstacle_list) ]
+        for ot in obstacle_template_list:
+            for index in range(ot['obstacle_num']):
+                oen = ot['edge_num'] # obstacle edge number
+                ren = self.car_tuple.G.shape[0]  # robot edge number
 
-        self.para_xi_list = [ cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_xi_'+str(obs_index)) for obs_index, obs in enumerate(obstacle_list)] 
-        self.para_zeta_list = [ cp.Parameter((1, self.T), value = np.zeros((1, self.T)), name='para_zeta_'+str(obs_index)) for obs_index, obs in enumerate(obstacle_list)]
+                self.para_lam_list += [ cp.Parameter((oen, self.T+1), value=0.1*np.ones((oen, self.T+1)), name='para_lam_'+ str(oen) + '_'  + str(index)) ]
+                self.para_mu_list += [ cp.Parameter((ren, self.T+1), value=np.ones((ren, self.T+1)), name='para_mu_'+ str(oen) + '_'  + str(index)) ]
+                self.para_z_list += [ cp.Parameter((1, self.T), nonneg=True, value=0.01*np.ones((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
+                self.para_xi_list += [ cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_xi_'+ str(oen) + '_'  + str(index))]
+                self.para_zeta_list += [ cp.Parameter((1, self.T), value = np.zeros((1, self.T)), name='para_zeta_'+ str(oen) + '_' + str(index))]
 
-    def adjust_parameter(self):
+    def obstacle_parameter_define(self, obstacle_template_list):
+
+        self.para_obstacle_list = []
+
+        for ot in obstacle_template_list: 
+            for index in range(ot['obstacle_num']):                
+                oen = ot['edge_num']
+
+                A_list = [ cp.Parameter((oen, 2), value=np.zeros((oen, 2)), name='para_A_t'+ str(t)) for t in range(self.T+1)]
+                b_list = [ cp.Parameter((oen, 1), value=np.zeros((oen, 1)), name='para_b_t'+ str(t)) for t in range(self.T+1)]
+                para_obstacle={'A': A_list, 'b': b_list, 'cone_type': ot['cone_type'], 'edge_num': oen, 'assign': False}
+
+                self.para_obstacle_list.append(para_obstacle)
+
+    def combine_parameter_define(self, obstacle_template_list):
+        self.para_obsA_lam_list = []   # lam.T @ obsA
+        self.para_obsb_lam_list = []   # lam.T @ obsb
+        self.para_obsA_rot_list = []   # obs.A @ rot
+        self.para_obsA_trans_list = []   # obs.A @ trans
+
+        for ot in obstacle_template_list: 
+            for index in range(ot['obstacle_num']): 
+
+                oen = ot['edge_num']
+
+                para_obsA_lam = cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_obsA_lam')
+                para_obsb_lam = cp.Parameter((self.T+1, 1), value=np.zeros((self.T+1, 1)), name='para_obsb_lam')
+
+                self.para_obsA_lam_list.append(para_obsA_lam)
+                self.para_obsb_lam_list.append(para_obsb_lam)
+
+                para_obsA_rot = [ cp.Parameter((oen, 2), value=np.zeros((oen, 2)), name='para_obsA_rot_t'+ str(t)) for t in range(self.T+1) ]
+                para_obsA_trans = [ cp.Parameter((oen, 1), value=np.zeros((oen, 1)), name='para_obsA_trans_t'+ str(t)) for t in range(self.T+1) ]
+
+                self.para_obsA_rot_list.append(para_obsA_rot)
+                self.para_obsA_trans_list.append(para_obsA_trans)
+
+
+    def adjust_parameter_define(self, **kwargs):
+        # ws: 1
+        # wu: 1
+        # ro1: 200
+        # ro2: 1
+        # slack_gain: 8
+        # max_sd: 1.0
+        # min_sd: 0.1
+
         # self.para_ws = cp.Parameter(value=1, nonneg=True)
         # self.para_wu = cp.Parameter(value=1, nonneg=True)
-        self.para_slack_gain = cp.Parameter(value=10, nonneg=True)
-        self.para_max_sd = cp.Parameter(value=1.0, nonneg=True)
-        self.para_min_sd = cp.Parameter(value=0.1, nonneg=True)
+        self.para_slack_gain = cp.Parameter(value=kwargs.get('slack_gain', 8), nonneg=True)
+        self.para_max_sd = cp.Parameter(value=kwargs.get('max_sd', 1.0), nonneg=True)
+        self.para_min_sd = cp.Parameter(value=kwargs.get('min_sd', 0.1), nonneg=True)
 
-    def update_adjust_parameter(self, **kwargs):
+    # endregion
+
+    # region: construct the problem
+    def construct_problem(self, **kwargs):
+        self.prob_su = self.construct_su_prob(**kwargs)
+        self.prob_LamMuZ_list = self.construct_LamMuZ_prob(**kwargs)
+
+
+    def construct_mp_problem(self, process_num, **kwargs):
+        self.prob_su = self.construct_su_prob(**kwargs)
+        pool = Pool(processes=process_num, initializer=self.init_prob_LamMuZ, initargs=(kwargs, )) 
+        return pool
+    
+    def construct_su_prob(self, **kwargs):
+        
+        ws = kwargs.get('ws', 1)
+        wu = kwargs.get('wu', 1)
+
+        ro1 = kwargs.get('ro1', 200)
+        ro2 = kwargs.get('ro2', 1)
+        
+        nav_cost, nav_constraints = self.nav_cost_cons(ws, wu)
+        su_cost, su_constraints = self.update_su_cost_cons(self.para_slack_gain, ro1, ro2)
+
+        prob_su = cp.Problem(cp.Minimize(nav_cost+su_cost), su_constraints+nav_constraints) 
+
+        assert prob_su.is_dcp(dpp=True)
+
+        return prob_su
+
+    def construct_LamMuZ_prob(self, **kwargs):
+        
+        ro1 = kwargs.get('ro1', 200)
+        ro2 = kwargs.get('ro2', 1) 
+        prob_list = []
+
+        for obs_index in range(self.obstacle_template_num):
+
+            indep_lam = self.indep_lam_list[obs_index]
+            indep_mu = self.indep_mu_list[obs_index]
+            indep_z = self.indep_z_list[obs_index]
+
+            para_xi = self.para_xi_list[obs_index]
+            para_zeta = self.para_zeta_list[obs_index]
+
+            para_obs = self.para_obstacle_list[obs_index]
+
+            para_obsA_rot = self.para_obsA_rot_list[obs_index]
+            para_obsA_trans = self.para_obsA_trans_list[obs_index]
+
+            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, self.para_s, self.para_rot_list, para_xi, self.para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, ro1, ro2)
+            
+            prob = cp.Problem(cp.Minimize(cost), constraints)
+
+            assert prob.is_dcp(dpp=True)
+            
+            prob_list.append(prob)
+
+        return prob_list
+
+    def init_prob_LamMuZ(self, kwargs):
+        global prob_LamMuZ_list, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, para_obsA_rot_list, para_obsA_trans_list, para_obstacle_list
+
+        para_xi_list = self.para_xi_list
+        para_zeta_list = self.para_zeta_list
+        para_s = self.para_s
+        para_rot_list = self.para_rot_list
+        para_dis = self.para_dis 
+
+        para_obsA_rot_list = self.para_obsA_rot_list
+        para_obsA_trans_list = self.para_obsA_trans_list
+        para_obstacle_list = self.para_obstacle_list
+
+        prob_LamMuZ_list = self.construct_LamMuZ_prob_parallel(para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, para_obstacle_list, para_obsA_rot_list, para_obsA_trans_list, **kwargs)
+
+    def construct_LamMuZ_prob_parallel(self, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, para_obstacle_list, para_obsA_rot_list, para_obsA_trans_list, **kwargs):
+
+        ro1 = kwargs.get('ro1', 200)
+        ro2 = kwargs.get('ro2', 1) 
+
+        prob_list = []
+
+        for obs_index in range(self.obstacle_template_num):
+
+            indep_lam = self.indep_lam_list[obs_index]
+            indep_mu = self.indep_mu_list[obs_index]
+            indep_z = self.indep_z_list[obs_index]
+
+            para_xi = para_xi_list[obs_index]
+            para_zeta = para_zeta_list[obs_index]
+
+            para_obs = para_obstacle_list[obs_index]
+            para_obsA_rot = para_obsA_rot_list[obs_index]
+            para_obsA_trans = para_obsA_trans_list[obs_index]
+
+            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, ro1, ro2)
+            
+            prob = cp.Problem(cp.Minimize(cost), constraints)
+            prob_list.append(prob)
+
+        return prob_list
+
+
+    def nav_cost_cons(self, ws=1, wu=1):
+ 
+        # path tracking objective cost constraints
+        # indep_s: cp.Variable((3, self.receding+1), name='state')
+        # indep_u: cp.Variable((2, self.receding), name='vel')
+        # para_ref_s: cp.Parameter((3, self.T+1), name='para_ref_state')
+
+        cost = 0
+        constraints = []
+
+        cost += self.C0_cost(self.para_ref_s, self.para_ref_speed, self.indep_s, self.indep_u[0, :], ws, wu)
+
+        constraints += self.dynamics_constraint(self.indep_s, self.indep_u, self.T)
+        constraints += self.bound_su_constraints(self.indep_s, self.indep_u, self.para_s, self.max_speed, self.acce_bound)
+
+        return cost, constraints
+    
+    def update_su_cost_cons(self, slack_gain=8, ro1=200, ro2=1):
+        cost = 0
+        constraints = []
+
+        if self.obstacle_template_num == 0:
+            return cost, constraints
+
+        cost += self.C1_cost(self.indep_dis, slack_gain)
+
+        Im_su_list = []
+        Hm_su_list = []
+        
+        for obs_index, para_obs in enumerate(self.para_obstacle_list):  
+            
+            para_xi = self.para_xi_list[obs_index]
+
+            para_lam = self.para_lam_list[obs_index]
+            para_mu = self.para_mu_list[obs_index]
+            para_z = self.para_z_list[obs_index]
+            para_zeta = self.para_zeta_list[obs_index]
+
+            para_obsA_lam = self.para_obsA_lam_list[obs_index]
+            para_obsb_lam = self.para_obsb_lam_list[obs_index]
+
+            Imsu = self.Im_su(self.indep_s, self.indep_dis, para_lam, para_mu, para_z, para_zeta, para_obs, para_obsA_lam, para_obsb_lam)
+            Hmsu = self.Hm_su(self.indep_rot_list, para_mu, para_lam, para_xi, para_obs, self.T, para_obsA_lam)
+            
+            Im_su_list.append(Imsu)
+            Hm_su_list.append(Hmsu)
+
+        rot_diff_list = []
+        for t in range(self.T):
+
+            indep_phi = self.indep_s[2, t+1:t+2]
+            indep_rot_t = self.indep_rot_list[t]
+
+            rot_diff_list.append(self.para_rot_list[t] - self.para_drot_phi_list[t] + self.para_drot_list[t] * indep_phi - indep_rot_t)
+
+        rot_diff_array = cp.vstack(rot_diff_list)
+        Im_su_array = cp.vstack(Im_su_list)
+        Hm_su_array = cp.vstack(Hm_su_list)
+
+        constraints += [cp.constraints.zero.Zero(rot_diff_array)]
+        
+        cost += 0.5*ro1 * cp.sum_squares(cp.neg(Im_su_array))
+        # constraints += [Im_su_array >= 0]
+        cost += 0.5*ro2 * cp.sum_squares(Hm_su_array)
+
+        constraints += self.bound_dis_constraints(self.indep_dis)
+
+        return cost, constraints
+
+    def LamMuZ_cost_cons(self, indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, receding, ro1, ro2):
+
+        cost = 0
+        constraints = []
+
+        Hm_array = self.Hm_LamMu(indep_lam, indep_mu, para_rot_list, para_xi, para_obs, receding, para_obsA_rot)
+        Im_array = self.Im_LamMu(indep_lam, indep_mu, indep_z, para_s, para_dis, para_zeta, para_obs, para_obsA_trans)
+
+        cost += 0.5*ro1 * cp.sum_squares(cp.neg(Im_array))
+        # constraints += [ Im_array >= 0 ]
+        cost += 0.5*ro2 * cp.sum_squares(Hm_array)
+
+        temp_list = []
+        for t in range(self.T):
+            para_obsAt = para_obs['A'][t+1]
+            indep_lam_t = indep_lam[:, t+1:t+2]
+            temp_list.append( cp.norm(para_obsAt.T @ indep_lam_t) )
+        
+        temp = cp.max(cp.vstack(temp_list))
+
+        constraints += [ temp <= 1 ]
+        # constraints += [ cp.norm(para_obs.A.T @ indep_lam, axis=0) <= 1 ]
+        constraints += [ self.cone_cp_array(-indep_lam, para_obs['cone_type']) ]
+        constraints += [ self.cone_cp_array(-indep_mu, self.car_tuple.cone_type) ]
+
+        return cost, constraints
+    # endregion
+
+    # region: assign value for parameters
+    def assign_adjust_parameter(self, **kwargs):
         # self.para_ws.value = kwargs.get('ws', 1)
         # self.para_wu.value = kwargs.get('wu', 1) 
         self.para_slack_gain = kwargs.get('slack_gain', 8)
         self.para_max_sd.value = kwargs.get('max_sd', 1.0)
         self.para_min_sd.value = kwargs.get('min_sd', 0.1)
+    
 
-    def iterative_solve(self, nom_s, nom_u, ref_states, ref_speed, **kwargs):
+    def assign_state_parameter(self, nom_s, nom_u, nom_dis):
 
-        start_time = time.time()
+        self.para_s.value = nom_s
+        self.para_u.value = nom_u
+        self.para_dis.value = nom_dis
+        
+        for t in range(self.T):
+            nom_st = nom_s[:, t:t+1]
+            nom_ut = nom_u[:, t:t+1]
+            
+            A, B, C = self.linear_ackermann_model(nom_st, nom_ut, self.dt, self.L)
+
+            self.para_A_list[t].value = A
+            self.para_B_list[t].value = B
+            self.para_C_list[t].value = C
+
+            nom_phi = nom_st[2, 0]
+            self.para_rot_list[t].value = np.array([[cos(nom_phi), -sin(nom_phi)],  [sin(nom_phi), cos(nom_phi)]])
+            self.para_drot_list[t].value = np.array( [[-sin(nom_phi), -cos(nom_phi)],  [cos(nom_phi), -sin(nom_phi)]] )
+            self.para_drot_phi_list[t].value = nom_phi * np.array( [[-sin(nom_phi), -cos(nom_phi)],  [cos(nom_phi), -sin(nom_phi)]] )
+
+    def assign_state_parameter_parallel(self, input):
+
+        nom_s, nom_dis = input
+
+        para_s.value = nom_s
+        para_dis.value = nom_dis
+        
+        for t in range(self.T):
+            nom_st = nom_s[:, t:t+1]
+            
+            nom_phi = nom_st[2, 0]
+            para_rot_list[t].value = np.array([[cos(nom_phi), -sin(nom_phi)],  [sin(nom_phi), cos(nom_phi)]])
+
+    def assign_dual_parameter(self, LamMuZ_list):
+
+        for index, LamMuZ in enumerate(LamMuZ_list):
+            self.para_lam_list[index].value = LamMuZ[0]
+            self.para_mu_list[index].value = LamMuZ[1]
+            self.para_z_list[index].value = LamMuZ[2]
+
+
+    def assign_obstacle_parameter(self, obstacle_list):
+        
+        # self.obstacle_template_list
+        self.obstacle_num = len(obstacle_list)
+
+        for obs in obstacle_list:
+            for para_obs in self.para_obstacle_list:
+
+                para_obs_edge_num = para_obs['edge_num']
+
+                if isinstance(obs.A, list):
+                    obs_edge_num = obs.A[0].shape[0]
+                    if obs_edge_num == para_obs_edge_num and para_obs['assign'] is False:
+                        for t in range(len(para_obs['A'])):
+                            para_obs['A'][t].value = obs.A[t]
+                            para_obs['b'][t].value = obs.b[t]
+
+                        para_obs['assign'] = True
+                        break
+                           
+                else:
+                    obs_edge_num = obs.A.shape[0]
+
+                    if obs_edge_num == para_obs_edge_num and para_obs['assign'] is False:
+                        for t in range(len(para_obs['A'])):
+                            para_obs['A'][t].value = obs.A
+                            para_obs['b'][t].value = obs.b
+
+                        para_obs['assign'] = True
+                        break
+                        
+        for para_obs in self.para_obstacle_list:
+            para_obs['assign'] = False
+
+
+    def assign_combine_parameter_lamobs(self):
+        
+        for n in range(self.obstacle_template_num):
+
+            para_lam_value = self.para_lam_list[n].value
+            para_obs = self.para_obstacle_list[n]
+
+            for t in range(self.T):
+                lam = para_lam_value[:, t+1:t+2]
+                obsA = para_obs['A'][t+1].value
+                obsb = para_obs['b'][t+1].value
+
+                self.para_obsA_lam_list[n].value[t+1, :] = lam.T @ obsA
+                self.para_obsb_lam_list[n].value[t+1, :] = lam.T @ obsb
+                    
+    def assign_combine_parameter_stateobs(self):
+        
+        # self.para_obsA_lam_list = []   # lam.T @ obsA
+        # self.para_obsb_lam_list = []   # lam.T @ obsb
+        # self.para_obsA_rot_list = []   # obs.A @ rot
+        # self.para_obsA_trans_list = []   # obs.A @ trans
+
+        for n in range(self.obstacle_template_num):
+
+            para_obs = self.para_obstacle_list[n]
+ 
+            for t in range(self.T):
+                obsA = para_obs['A'][t+1].value
+
+                rot = self.para_rot_list[t].value
+                trans = self.para_s.value[0:2, t+1:t+2]
+                
+                self.para_obsA_rot_list[n][t+1].value = obsA @ rot
+                self.para_obsA_trans_list[n][t+1].value = obsA @ trans
+
+    # endregion
+    
+    # region: solve the problem
+    def iterative_solve(self, nom_s, nom_u, ref_states, ref_speed, obstacle_list, **kwargs):
+
+        # obstacle_list: a list of obstacle instance
+        #   obstacle: (A, b, cone_type)
+
+        # start_time = time.time()
         
         self.para_ref_s.value = np.hstack(ref_states)[0:3, :]
         self.para_ref_speed.value = ref_speed
 
-        self.update_state_parameter(nom_s, nom_u, self.para_dis.value)
+        # random.shuffle(obstacle_list)
+
+        self.assign_state_parameter(nom_s, nom_u, self.para_dis.value)
+        self.assign_obstacle_parameter(obstacle_list)
 
         iteration_time = time.time()
         for i in range(self.iter_num):
@@ -149,15 +544,24 @@ class RDA_solver:
         
         resi_dual, resi_pri = 0, 0
         
+        # start_time = time.time()
         nom_s, nom_u, nom_dis = self.su_prob_solve()
+        # print('- su problem solve:', time.time() - start_time)
+        
+        self.assign_state_parameter(nom_s, nom_u, nom_dis)
+        # start_time = time.time()
+        self.assign_combine_parameter_stateobs()
+        # print('- other1:', time.time() - start_time)
 
-        self.update_state_parameter(nom_s, nom_u, nom_dis)
-
-        if len(self.obstacle_list) != 0:
-
+        if self.obstacle_num != 0:
+        # if self.obstacle_template_num != 0:
+            # start_time = time.time()
             LamMuZ_list, resi_dual = self.LamMuZ_prob_solve()
-            self.updata_obstacle_parameter(LamMuZ_list)
-                
+            # print('- LamMu problem solve:', time.time() - start_time)
+
+            self.assign_dual_parameter(LamMuZ_list)
+            self.assign_combine_parameter_lamobs()
+
             resi_pri = self.update_xi()
             self.update_zeta()
             
@@ -165,23 +569,38 @@ class RDA_solver:
 
     def update_zeta(self):
 
-        for obs_index, obs in enumerate(self.obstacle_list):
-            
-            lam = self.para_lam_list[obs_index].value
-            mu = self.para_mu_list[obs_index].value
-            z = self.para_z_list[obs_index].value
-            zeta = self.para_zeta_list[obs_index].value
+        for obs_index, para_obs in enumerate(self.para_obstacle_list):
 
-            Im_array = np.diag( lam.T @ obs.A @ self.para_s.value[0:2] - lam.T @ obs.b - mu.T @ self.car_tuple.h ) 
-            Im_array = Im_array[np.newaxis, :]
-            
-            self.para_zeta_list[obs_index].value = zeta + (Im_array[0:1, 1:] - self.para_dis.value - z)    
+            Im_list = []
+            zeta = self.para_zeta_list[obs_index].value
+            z = self.para_z_list[obs_index].value
+
+            for t in range(self.T):
+
+                lam_t = self.para_lam_list[obs_index].value[:, t+1:t+2]
+                mu_t = self.para_mu_list[obs_index].value[:, t+1:t+2]
+                z_t = self.para_z_list[obs_index].value[:, t:t+1]
+                zeta_t = self.para_zeta_list[obs_index].value[:, t:t+1]
+
+                trans_t = self.para_s.value[0:2, t+1:t+2]
+
+                para_obsAt = para_obs['A'][t+1].value
+                para_obsbt = para_obs['b'][t+1].value
+
+                Im = lam_t.T @ para_obsAt @ trans_t - lam_t.T @ para_obsbt - mu_t.T @ self.car_tuple.h
+
+                Im_list.append(Im)
+
+            Im_array = np.hstack(Im_list)
+
+            # temp= zeta + (Im_array - self.para_dis.value - z)  
+            self.para_zeta_list[obs_index].value = zeta + (Im_array - self.para_dis.value - z)    
             
     def update_xi(self): 
 
         hm_list = []
 
-        for obs_index, obs in enumerate(self.obstacle_list):
+        for obs_index, obs in enumerate(self.para_obstacle_list):
             for t in range(self.T):
 
                 lam_t = self.para_lam_list[obs_index].value[:, t+1:t+2]
@@ -189,7 +608,9 @@ class RDA_solver:
                 rot_t = self.para_rot_list[t].value
                 xi_t = self.para_xi_list[obs_index].value[t+1:t+2, :]
                 
-                Hmt = mu_t.T @ self.car_tuple.G + lam_t.T @ obs.A @ rot_t
+                obsAt = obs['A'][t+1].value
+
+                Hmt = mu_t.T @ self.car_tuple.G + lam_t.T @ obsAt @ rot_t
                 self.para_xi_list[obs_index].value[t+1:t+2, :] = Hmt + xi_t    
 
                 hm_list.append(Hmt)
@@ -198,7 +619,7 @@ class RDA_solver:
         resi_pri = np.linalg.norm(hm_array)
 
         return resi_pri
-
+    
     def su_prob_solve(self):
         self.prob_su.solve(solver=cp.ECOS, verbose=False)
 
@@ -212,7 +633,7 @@ class RDA_solver:
         
         input_args = []
         if self.process_num > 1:
-            for obs_index in range(len(self.obstacle_list)):
+            for obs_index in range(self.obstacle_template_num):
 
                 nom_s = self.para_s.value
                 nom_dis = self.para_dis.value
@@ -223,12 +644,17 @@ class RDA_solver:
                 nom_mu = self.para_mu_list[obs_index].value
                 nom_z = self.para_z_list[obs_index].value
                 
-                input_args.append((obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta))
+                nom_obs_A = [o.value for o in self.para_obstacle_list[obs_index]['A']]    
+                nom_obs_b = [o.value for o in self.para_obstacle_list[obs_index]['b']]   
+                nom_obsA_rot = [p.value for p in self.para_obsA_rot_list[obs_index]]
+                nom_obsA_trans = [p.value for p in self.para_obsA_trans_list[obs_index]] 
+
+                input_args.append((obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta, nom_obs_A, nom_obs_b, nom_obsA_rot, nom_obsA_trans))
             
             LamMuZ_list = pool.map(RDA_solver.solve_parallel, input_args)
 
         else:
-            for obs_index in range(len(self.obstacle_list)):
+            for obs_index in range(self.obstacle_template_num):
                 prob = self.prob_LamMuZ_list[obs_index]
                 input_args.append((prob, obs_index))
             
@@ -245,8 +671,8 @@ class RDA_solver:
 
     def solve_parallel(input):
         
-        obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta = input
-
+        obs_index, nom_s, nom_dis, nom_xi, receding, nom_lam, nom_mu, nom_z, nom_zeta, nom_obs_A, nom_obs_b, nom_obsA_rot, nom_obsA_trans = input
+        
         prob = prob_LamMuZ_list[obs_index]
 
         # update parameter
@@ -259,7 +685,13 @@ class RDA_solver:
             nom_st = nom_s[:, t:t+1]
             nom_phi = nom_st[2, 0]
             para_rot_list[t].value = np.array([[cos(nom_phi), -sin(nom_phi)],  [sin(nom_phi), cos(nom_phi)]])
-      
+            
+            para_obsA_rot_list[obs_index][t+1].value = nom_obsA_rot[t+1]
+            para_obsA_trans_list[obs_index][t+1].value = nom_obsA_trans[t+1]
+
+            para_obstacle_list[obs_index]['A'][t+1].value = nom_obs_A[t+1]
+            para_obstacle_list[obs_index]['b'][t+1].value = nom_obs_b[t+1]
+        
         prob.solve(solver=cp.ECOS)
 
         for variable in prob.variables():
@@ -308,218 +740,33 @@ class RDA_solver:
         else:
             print('Update Lam Mu Fail')
             return para_lam.value, para_mu.value, para_z.value, inf
-    
-    def update_state_parameter(self, nom_s, nom_u, nom_dis):
-
-        self.para_s.value = nom_s
-        self.para_u.value = nom_u
-        self.para_dis.value = nom_dis
         
+    # endregion
+
+    # region: formula， Hm, Im
+    def Im_su(self, state, distance, para_lam, para_mu, para_z, para_zeta, para_obs, para_obsA_lam, para_obsb_lam):
+        
+        Im_list = []
+
         for t in range(self.T):
-            nom_st = nom_s[:, t:t+1]
-            nom_ut = nom_u[:, t:t+1]
-            
-            A, B, C = self.linear_ackermann_model(nom_st, nom_ut, self.dt, self.L)
+            para_lam_t = para_lam[:, t+1:t+2]
+            indep_trans_t = state[0:2, t+1:t+2]
+            para_mu_t = para_mu[:, t+1:t+2]
 
-            self.para_A_list[t].value = A
-            self.para_B_list[t].value = B
-            self.para_C_list[t].value = C
+            para_obsAt = para_obs['A'][t+1]
+            para_obsbt = para_obs['b'][t+1]
 
-            nom_phi = nom_st[2, 0]
-            self.para_rot_list[t].value = np.array([[cos(nom_phi), -sin(nom_phi)],  [sin(nom_phi), cos(nom_phi)]])
-            self.para_drot_list[t].value = np.array( [[-sin(nom_phi), -cos(nom_phi)],  [cos(nom_phi), -sin(nom_phi)]] )
-            self.para_drot_phi_list[t].value = nom_phi * np.array( [[-sin(nom_phi), -cos(nom_phi)],  [cos(nom_phi), -sin(nom_phi)]] )
+            para_obsA_lam_t = para_obsA_lam[t+1:t+2, :]
+            para_obsb_lam_t = para_obsb_lam[t+1:t+2, :]
+             
+            Im = para_obsA_lam_t @ indep_trans_t - para_obsb_lam_t - para_mu_t.T @ self.car_tuple.h
+            Im_list.append(Im)
 
-    def update_state_parameter_parallel(self, input):
+        Im_array = cp.hstack(Im_list)
 
-        nom_s, nom_dis = input
+        return Im_array[0, :] - distance[0, :] - para_z[0, :] + para_zeta[0, :]
 
-        para_s.value = nom_s
-        para_dis.value = nom_dis
-        
-        for t in range(self.T):
-            nom_st = nom_s[:, t:t+1]
-            
-            nom_phi = nom_st[2, 0]
-            para_rot_list[t].value = np.array([[cos(nom_phi), -sin(nom_phi)],  [sin(nom_phi), cos(nom_phi)]])
-
-    def updata_obstacle_parameter(self, LamMuZ_list):
-
-        for index, LamMuZ in enumerate(LamMuZ_list):
-            self.para_lam_list[index].value = LamMuZ[0]
-            self.para_mu_list[index].value = LamMuZ[1]
-            self.para_z_list[index].value = LamMuZ[2]
-            
-    def construct_problem(self, **kwargs):
-        prob_su = self.update_su_prob(**kwargs)
-        prob_LamMuZ_list = self.update_LamMuZ_prob(**kwargs)
-
-        return prob_su, prob_LamMuZ_list
-    
-    def update_LamMuZ_prob_parallel(self, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, **kwargs):
-
-        ro1 = kwargs.get('ro1', 200)
-        ro2 = kwargs.get('ro2', 1) 
-
-        prob_list = []
-
-        for obs_index in range(len(self.obstacle_list)):
-
-            indep_lam = self.indep_lam_list[obs_index]
-            indep_mu = self.indep_mu_list[obs_index]
-            indep_z = self.indep_z_list[obs_index]
-
-            para_xi = para_xi_list[obs_index]
-            obs = self.obstacle_list[obs_index]
-            para_zeta = para_zeta_list[obs_index]
-
-            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, obs, self.T, ro1, ro2)
-            
-            prob = cp.Problem(cp.Minimize(cost), constraints)
-            prob_list.append(prob)
-
-        return prob_list
-    
-
-    def update_LamMuZ_prob(self, **kwargs):
-        
-        ro1 = kwargs.get('ro1', 200)
-        ro2 = kwargs.get('ro2', 1) 
-        prob_list = []
-
-        for obs_index in range(len(self.obstacle_list)):
-
-            indep_lam = self.indep_lam_list[obs_index]
-            indep_mu = self.indep_mu_list[obs_index]
-            indep_z = self.indep_z_list[obs_index]
-
-            para_xi = self.para_xi_list[obs_index]
-            obs = self.obstacle_list[obs_index]
-            para_zeta = self.para_zeta_list[obs_index]
-
-            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, self.para_s, self.para_rot_list, para_xi, self.para_dis, para_zeta, obs, self.T, ro1, ro2)
-            
-            prob = cp.Problem(cp.Minimize(cost), constraints)
-
-            assert prob.is_dcp(dpp=True)
-            
-            prob_list.append(prob)
-
-        return prob_list
-
-    
-    def update_su_prob(self, **kwargs):
-        
-        self.update_adjust_parameter(**kwargs)
-
-        ws = kwargs.get('ws', 1)
-        wu = kwargs.get('ws', 1)
-
-        ro1 = kwargs.get('ro1', 200)
-        ro2 = kwargs.get('ro2', 1)
-        
-        nav_cost, nav_constraints = self.nav_cost_cons(ws, wu)
-        su_cost, su_constraints = self.update_su_cost_cons(self.para_slack_gain, ro1, ro2)
-
-        prob_su = cp.Problem(cp.Minimize(nav_cost+su_cost), su_constraints+nav_constraints) 
-
-        assert prob_su.is_dcp(dpp=True)
-
-        return prob_su
-    
-    def nav_cost_cons(self, ws=1, wu=1):
- 
-        # path tracking objective cost constraints
-        # indep_s: cp.Variable((3, self.receding+1), name='state')
-        # indep_u: cp.Variable((2, self.receding), name='vel')
-        # para_ref_s: cp.Parameter((3, self.T+1), name='para_ref_state')
-
-        cost = 0
-        constraints = []
-
-        cost += self.C0_cost(self.para_ref_s, self.para_ref_speed, self.indep_s, self.indep_u[0, :], ws, wu)
-
-        constraints += self.dynamics_constraint(self.indep_s, self.indep_u, self.T)
-        constraints += self.bound_su_constraints(self.indep_s, self.indep_u, self.para_s, self.max_speed, self.acce_bound)
-
-        return cost, constraints
-
-    def update_su_cost_cons(self, slack_gain=10, ro1=200, ro2=1):
-        cost = 0
-        constraints = []
-
-        if len(self.obstacle_list) == 0:
-            return cost, constraints
-
-        cost += self.C1_cost(self.indep_dis, slack_gain)
-
-        Im_su_list = []
-        Hm_su_list = []
-        
-        for obs_index, obs in enumerate(self.obstacle_list):  
-            
-            para_xi = self.para_xi_list[obs_index]
-
-            para_lam = self.para_lam_list[obs_index]
-            para_mu = self.para_mu_list[obs_index]
-            para_z = self.para_z_list[obs_index]
-            para_zeta = self.para_zeta_list[obs_index]
-
-            Imsu = self.Im_su(self.indep_s, self.indep_dis, para_lam, para_mu, para_z, para_zeta, obs)
-            Hmsu = self.Hm_su(self.indep_rot_list, para_mu, para_lam, para_xi, obs, self.T)
-            
-            Im_su_list.append(Imsu)
-            Hm_su_list.append(Hmsu)
-
-        rot_diff_list = []
-        for t in range(self.T):
-
-            indep_phi = self.indep_s[2, t+1:t+2]
-            indep_rot_t = self.indep_rot_list[t]
-
-            rot_diff_list.append(self.para_rot_list[t] - self.para_drot_phi_list[t] + self.para_drot_list[t] * indep_phi - indep_rot_t)
-
-        rot_diff_array = cp.vstack(rot_diff_list)
-        Im_su_array = cp.vstack(Im_su_list)
-        Hm_su_array = cp.vstack(Hm_su_list)
-
-        constraints += [cp.constraints.zero.Zero(rot_diff_array)]
-        
-        cost += 0.5*ro1 * cp.sum_squares(cp.neg(Im_su_array))
-        # constraints += [Im_su_array >= 0]
-        cost += 0.5*ro2 * cp.sum_squares(Hm_su_array)
-
-        constraints += self.bound_dis_constraints(self.indep_dis)
-
-        return cost, constraints
-
-    def LamMuZ_cost_cons(self, indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, obs, receding, ro1, ro2):
-
-        cost = 0
-        constraints = []
-
-        Hm_array = self.Hm_LamMu(indep_lam, indep_mu, para_rot_list, para_xi, obs, receding)
-        Im_array = self.Im_LamMu(indep_lam, indep_mu, indep_z, para_s, para_dis, para_zeta, obs)
-
-        cost += 0.5*ro1 * cp.sum_squares(cp.neg(Im_array))
-        # constraints += [ Im_array >= 0 ]
-        cost += 0.5*ro2 * cp.sum_squares(Hm_array)
-
-        constraints += [ cp.norm(obs.A.T @ indep_lam, axis=0) <= 1 ]
-        constraints += [ self.cone_cp_array(-indep_lam, obs.cone_type) ]
-        constraints += [ self.cone_cp_array(-indep_mu, self.car_tuple.cone_type) ]
-
-        return cost, constraints
-
-
-    def Im_su(self, state, distance, para_lam, para_mu, para_z, para_zeta, obs):
-        
-        indep_trans = state[0:2]
-        Im_array = cp.diag( para_lam.T @ obs.A @ indep_trans - para_lam.T @ obs.b - para_mu.T @ self.car_tuple.h)
-
-        return Im_array[1:] - distance[0, :] - para_z[0, :] + para_zeta[0, :]
-
-    def Hm_su(self, rot, para_mu, para_lam, para_xi, obs, receding):
+    def Hm_su(self, rot, para_mu, para_lam, para_xi, para_obs, receding, para_obsA_lam):
         
         Hm_list = []
 
@@ -530,34 +777,52 @@ class RDA_solver:
             para_xi_t = para_xi[t+1:t+2, :]
             indep_rot_t = rot[t]
 
-            Hmt = mu_t.T @ self.car_tuple.G + lam_t.T @ obs.A @ indep_rot_t + para_xi_t
+            para_obsAt = para_obs['A'][t+1]
+
+            para_obsA_lam_t = para_obsA_lam[t+1:t+2, :]
+
+            Hmt = mu_t.T @ self.car_tuple.G + para_obsA_lam_t @ indep_rot_t + para_xi_t
 
             Hm_list.append(Hmt)
 
         return cp.vstack(Hm_list)
 
-    def Hm_LamMu(self, indep_lam, indep_mu, para_rot_list, para_xi, obs, receding):
+    def Hm_LamMu(self, indep_lam, indep_mu, para_rot_list, para_xi, para_obs, receding, para_obsA_rot):
 
         Hm_list = []
         for t in range(receding):
-            lam_t = indep_lam[:, t+1:t+2]
-            mu_t = indep_mu[:, t+1:t+2]
+            indep_lam_t = indep_lam[:, t+1:t+2]
+            indep_mu_t = indep_mu[:, t+1:t+2]
             
             para_rot_t = para_rot_list[t]
             para_xi_t = para_xi[t+1:t+2, :]
+
+            para_obsA_rot_t = para_obsA_rot[t+1]
         
-            Hmt = mu_t.T @ self.car_tuple.G + lam_t.T @ obs.A @ para_rot_t + para_xi_t
+            Hmt = indep_mu_t.T @ self.car_tuple.G + indep_lam_t.T @ para_obsA_rot_t + para_xi_t
             Hm_list.append(Hmt)
 
         return cp.vstack(Hm_list)
 
-    def Im_LamMu(self, indep_lam, indep_mu, indep_z, para_s, para_dis, para_zeta, obs):
+    def Im_LamMu(self, indep_lam, indep_mu, indep_z, para_s, para_dis, para_zeta, para_obs, para_obsA_trans):
 
-        Im_array = cp.diag( indep_lam.T @ obs.A @ para_s[0:2] - indep_lam.T @ obs.b - indep_mu.T @ self.car_tuple.h ) 
-        Im = Im_array[1:] - para_dis[0, :] - indep_z[0, :] + para_zeta[0, :]
+        # Im_array = cp.diag( indep_lam.T @ obs.A @ para_s[0:2] - indep_lam.T @ obs.b - indep_mu.T @ self.car_tuple.h ) 
+        Im_list = []
 
-        return Im
+        for t in range(self.T):
+            indep_lam_t = indep_lam[:, t+1:t+2]
+            indep_mu_t = indep_mu[:, t+1:t+2]
+            para_obsbt = para_obs['b'][t+1]
+            para_obsA_trans_t = para_obsA_trans[t+1]
 
+            Im = indep_lam_t.T @ para_obsA_trans_t - indep_lam_t.T @ para_obsbt - indep_mu_t.T @ self.car_tuple.h
+            Im_list.append(Im)
+
+        Im_array = cp.hstack(Im_list)
+
+        Im_lammu = Im_array[0, :] - para_dis[0, :] - indep_z[0, :] + para_zeta[0, :]
+
+        return Im_lammu
 
     def dynamics_constraint(self, state, control_u, receding):
 
@@ -596,8 +861,7 @@ class RDA_solver:
         constraints += [ cp.min(indep_dis) >= self.para_min_sd ]
 
         return constraints
-
-
+    
     def linear_ackermann_model(self, nom_state, nom_u, dt, L):
         
         phi = nom_state[2, 0]
@@ -630,4 +894,16 @@ class RDA_solver:
             return cp.constraints.nonpos.NonPos(array)
         elif cone == 'norm2':
             return cp.constraints.nonpos.NonPos( cp.norm(array[0:-1], axis = 0) - array[-1]  )
+        
+    # endregion
+    
+
+
+    
+
+
+    
+
+
+    
 

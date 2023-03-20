@@ -8,7 +8,7 @@ The source code of the paper "RDA: An Accelerated Collision Free Motion Planner 
 - Python >= 3.8
 - numpy
 - cvxpy
-- [ir_sim==1.1.7](https://github.com/hanruihua/ir_sim): A python based 2d robot simulator for robotics navigation algorithm. 
+- [ir_sim==1.1.9](https://github.com/hanruihua/ir_sim): A python based 2d robot simulator for robotics navigation algorithm. 
 - [GenerateCurveTool](https://github.com/hanruihua/GenerateCurveTool): A tool of generating the common curves from way points for the robot path planning, including dubins path, reeds shepp, etc.
 
 ## Installation 
@@ -21,24 +21,14 @@ pip install -e .
 
 ## Run examples
 
-- **Path Track (example/path_track.py)**
+**Path Track (example/path_track.py)**                 |  <img src="example\path_track\animation\path_track.gif" width="400" />  
+|:-------------------------:|:-------------------------:|
+**Cross Corridor (example/corridor.py)** | <img src="example\corridor\animation\corridor.gif" width="500" />|
+**Reverse Parking (example/reverse.py)** | <img src="example\reverse\animation\reverse_park.gif" width="400" />
 
-<div align=center>
-<img src="example\path_track\animation\path_track.gif" width="700" />
-</div>
 
-- **Cross Corridor (example/corridor.py)**
-
-<div align=center>
-<img src="example\corridor\animation\corridor.gif" width="700" />
-</div>
-
-- **Reverse Parking (example/reverse.py)**
-
-<div align=center>
-<img src="example\reverse\animation\reverse_park.gif" width="700" />
-</div>
-
+**Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="example\dynamic_obs\animation\dynamic_obs1.gif" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
+|:-------------------------:|:-------------------------:|:-------------------------:|
 
 ## Contact
 
