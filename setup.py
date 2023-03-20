@@ -9,7 +9,7 @@ setup(
         'cvxpy',
         'numpy',
         'pathos',
-        'ir_sim==1.1.8',
+        'ir_sim==1.1.9',
         'matplotlib'
     ],
     description="The source code of optimization based RDA motion planner",

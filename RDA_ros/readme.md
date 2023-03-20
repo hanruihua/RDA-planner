@@ -1,2 +1,0 @@
-# RDA planner ROS package
-

@@ -14,7 +14,7 @@ from collections import namedtuple
 rdaobs = namedtuple('rdaobs', 'A b cone_type')
 
 class MPC:
-    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, **kwargs) -> None:
+    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, **kwargs) -> None:
 
         '''
         Agruments 
@@ -35,6 +35,7 @@ class MPC:
             *ro1 (200): The penalty parameter in ADMM.
             ro2 (1): The penalty parameter in ADMM.
             init_vel ([0,0]): The initial velocity of the car robot.
+            rda_obstacle: if True, the obstacle list can be transported to rda_solver directly, otherwise, it should be converted.
         '''
         
         self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed max_acce'
@@ -54,6 +55,8 @@ class MPC:
         print( time.time() - start_time)
 
         self.enable_reverse = enable_reverse
+
+        self.rda_obstacle = rda_obstacle
 
         if enable_reverse:
             self.curve_list = self.split_path(self.ref_path)
@@ -80,8 +83,11 @@ class MPC:
 
         state_pre_array, ref_traj_list, self.cur_index = self.pre_process(state, cur_ref_path, self.cur_index, ref_speed, **kwargs)
 
-        rda_obs_list = self.convert_rda_obstacle(obstacle_list)
-
+        if not self.rda_obstacle:
+            rda_obs_list = self.convert_rda_obstacle(obstacle_list)
+        else:
+            rda_obs_list = obstacle_list
+        
         u_opt_array, info = self.rda.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, gear_flag*ref_speed, rda_obs_list, **kwargs)
 
         if self.cur_index == len(cur_ref_path) - 1:
@@ -296,7 +302,6 @@ class MPC:
             b = []
             for t in range(self.receding+1):
                 next = center + velocity * (t * self.dt)
-                temp = next - center
                 temp_A = np.array([ [1, 0], [0, 1], [0, 0] ])
                 temp_b = np.row_stack((next, -radius* np.ones((1,1))))
 
@@ -307,5 +312,44 @@ class MPC:
         
 
     def convert_inequal_polygon(self, vertex, velocity=np.zeros((2, 1))):
-        # return A, b or A_list, b_list
-        pass
+        # vertex: 2*4 matrix
+
+        if np.linalg.norm(velocity) <= 0.01:
+            A, b = self.gen_inequal_global(vertex)
+        else:
+            A, b = [], []
+
+            for t in range(self.receding+1): 
+                next = vertex + velocity * (t * self.dt)
+                temp_A, temp_b = self.gen_inequal_global(next)
+                A.append(temp_A)
+                b.append(temp_b)
+
+        return A, b
+
+    def gen_inequal_global(self, vertex):
+
+        temp_vertex = np.c_[vertex, vertex[0:2, 0]]   
+
+        point_num = vertex.shape[1]
+        
+        A = np.zeros((point_num, 2))
+        b = np.zeros((point_num, 1))
+
+        for i in range(point_num):
+            cur_p = temp_vertex[0:2, i]
+            next_p = temp_vertex[0:2, i+1]
+
+            diff = next_p - cur_p
+
+            ax = diff[1]
+            by = -diff[0]
+            c = ax * cur_p[0] + by * cur_p[1]
+
+            A[i, 0] = ax
+            A[i, 1] = by
+            b[i, 0] = c
+
+        return A, b 
+
+

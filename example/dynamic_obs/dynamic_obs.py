@@ -42,7 +42,7 @@ def main():
             print('arrive at the goal')
             break
 
-    env.end(ani_name='dynamic_obs', show_traj=True, show_trail=True, ending_time=3, ani_kwargs={'subrectangles':True})
+    env.end(ani_name='dynamic_obs2', show_traj=True, show_trail=True, ending_time=3, ani_kwargs={'subrectangles':True})
     
 if __name__ == '__main__':
     main()
