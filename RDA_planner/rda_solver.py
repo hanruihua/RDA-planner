@@ -27,7 +27,7 @@ class RDA_solver:
 
         # setting
         self.T = receding
-        self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed max_acce'
+        self.car_tuple = car_tuple # car_tuple: 'G h cone_type wheelbase max_speed max_acce'
         self.L = car_tuple.wheelbase
         self.max_speed = np.c_[self.car_tuple.max_speed]
         self.obstacle_template_list = obstacle_template_list
