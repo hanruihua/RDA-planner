@@ -8,9 +8,10 @@ from scipy.spatial import ConvexHull, convex_hull_plot_2d
 import cv2
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
+from pyhull.convex_hull import ConvexHull
 
 # environment
-env = EnvBase('lidar_path_track.yaml', save_ani=False, display=True, full=False)
+env = EnvBase('lidar_path_track.yaml', save_ani=True, display=True, full=True)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
 obs = namedtuple('obstacle', 'center radius vertex cone_type velocity')
 
@@ -41,22 +42,24 @@ def scan_box(state, scan_data):
 
     else:
         point_array = np.hstack(point_list).T
+        labels = DBSCAN(eps=2.0, min_samples=6).fit_predict(point_array)
 
-        dbscan = DBSCAN(eps=1.5, min_samples=4)
-        labels = dbscan.fit_predict(point_array)
+        for label in labels:
+            if label == -1:
+                continue
+            else:
+                point_array2 = point_array[labels == label]
+                rect = cv2.minAreaRect(point_array2.astype(np.float32))
+                box = cv2.boxPoints(rect)
 
-    
-        rect = cv2.minAreaRect(point_array.astype(np.float32))
-        box = cv2.boxPoints(rect)
+                vertices = box.T
 
-        vertices = box.T
+                trans = state[0:2]
+                rot = state[2, 0]
+                R = np.array([[np.cos(rot), -np.sin(rot)], [np.sin(rot), np.cos(rot)]])
+                global_vertices = trans + R @ vertices
 
-        trans = state[0:2]
-        rot = state[2, 0]
-        R = np.array([[np.cos(rot), -np.sin(rot)], [np.sin(rot), np.cos(rot)]])
-        global_vertices = trans + R @ vertices
-
-        obstacle_list.append(obs(None, None, global_vertices, 'Rpositive', 0))
+                obstacle_list.append(obs(None, None, global_vertices, 'Rpositive', 0))
 
         return obstacle_list
 
@@ -68,9 +71,9 @@ def main():
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
     
-    obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 0, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 1, 'cone_type': 'Rpositive'}] # define the number of obstacles in advance
+    obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 0, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 3, 'cone_type': 'Rpositive'}] # define the number of obstacles in advance
 
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=5, obstacle_template_list=obstacle_template_list, obstacle_order=True, min_sd=0.5)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=5, iter_num=5, obstacle_template_list=obstacle_template_list, obstacle_order=True, wu=0.5, slack_gain=5)
     
     for i in range(500):   
         
@@ -79,15 +82,14 @@ def main():
         # obs_list : obstacle: (center, radius, vertex, cone_type, velocity)
         obs_list = scan_box(env.robot.state, scan_data)
 
-        if len(obs_list) > 0: temp = plt.plot(obs_list[0].vertex[0,:], obs_list[0].vertex[1,:], 'b-')
-        
+        for obs in obs_list:
+            env.draw_box(obs.vertex, refresh=True)
+   
         opt_vel, info = mpc_opt.control(env.robot.state, 4, obs_list)
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
         env.step(opt_vel, stop=False)
         env.render(show_traj=True, show_trail=True)
-
-        if len(obs_list) > 0: temp.pop(0).remove()
 
         if env.done():
             env.render_once(show_traj=True, show_trail=True)

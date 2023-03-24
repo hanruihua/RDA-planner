@@ -21,7 +21,7 @@ robots:
     - type: 'lidar'
       # id: 0  # only id robot has 
       range_min: 0
-      range_max: 8
+      range_max: 10
       angle_range: 3.1415926
       number: 100
       noise: False
@@ -41,7 +41,7 @@ obstacles:
 
   - type: 'obstacle_circle'
     number: 10
-    distribute: {mode: 'manual', states: [[20, 34], [31, 38], [10, 20], [41, 25], [20, 13], [16, 26], [10, 24], [18, 20], [16, 26], [19, 26], [10, 30]], shapes: [1.5, 1.0, 1.0]}  # shapes: radiuses 
+    distribute: {mode: 'manual', states: [[20, 34], [31, 38], [9, 20], [41, 25], [20, 13], [16, 26], [10, 24], [18, 20], [16, 26], [19, 26], [10, 30]], shapes: [1.5, 1.0, 1.0]}  # shapes: radiuses 
 
 
   
