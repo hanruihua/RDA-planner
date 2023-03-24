@@ -7,6 +7,7 @@ import time
 from scipy.spatial import ConvexHull, convex_hull_plot_2d
 import cv2
 import matplotlib.pyplot as plt
+from sklearn.cluster import DBSCAN
 
 # environment
 env = EnvBase('lidar_path_track.yaml', save_ani=False, display=True, full=False)
@@ -36,10 +37,15 @@ def scan_box(state, scan_data):
             point_list.append(point)
 
     if len(point_list) < 4:
-        return obstacle_list, None
+        return obstacle_list
 
     else:
         point_array = np.hstack(point_list).T
+
+        dbscan = DBSCAN(eps=1.5, min_samples=4)
+        labels = dbscan.fit_predict(point_array)
+
+    
         rect = cv2.minAreaRect(point_array.astype(np.float32))
         box = cv2.boxPoints(rect)
 
@@ -52,9 +58,7 @@ def scan_box(state, scan_data):
 
         obstacle_list.append(obs(None, None, global_vertices, 'Rpositive', 0))
 
-        global_point_array = trans + R @ point_array.T
-
-        return obstacle_list, global_point_array
+        return obstacle_list
 
 
         # obs_list : obstacle: (center, radius, vertex, cone_type, velocity)
@@ -73,7 +77,7 @@ def main():
         obs_list_ref = env.get_obstacle_list()
         scan_data = env.get_lidar_scan()
         # obs_list : obstacle: (center, radius, vertex, cone_type, velocity)
-        obs_list, point_array = scan_box(env.robot.state, scan_data)
+        obs_list = scan_box(env.robot.state, scan_data)
 
         if len(obs_list) > 0: temp = plt.plot(obs_list[0].vertex[0,:], obs_list[0].vertex[1,:], 'b-')
         
