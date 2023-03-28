@@ -8,10 +8,10 @@ from scipy.spatial import ConvexHull, convex_hull_plot_2d
 import cv2
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
-from pyhull.convex_hull import ConvexHull
+# from pyhull.convex_hull import ConvexHull
 
 # environment
-env = EnvBase('lidar_path_track.yaml', save_ani=True, display=True, full=True)
+env = EnvBase('lidar_path_track.yaml', save_ani=False, display=True, full=False)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
 obs = namedtuple('obstacle', 'center radius vertex cone_type velocity')
 
