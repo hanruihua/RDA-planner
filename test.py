@@ -1,31 +1,59 @@
-import cvxpy as cp
 import numpy as np
 
-# Define the initial parameter size and value
-n = 10
-params_value = np.random.randn(n)
 
-# Define the parameter
-params = cp.Parameter(n)
+def gradient_descent(A, b, x_init, lr=0.01, num_iters=1000, tol=1e-6):
+    """
+    Gradient descent algorithm to solve the least squares problem.
+    
+    Args:
+    A: numpy array, shape (m, n)
+       Input matrix
+    b: numpy array, shape (m, 1)
+       Input vector
+    x_init: numpy array, shape (n, 1)
+            Initial solution vector
+    lr: float, optional
+        Learning rate
+    num_iters: int, optional
+               Maximum number of iterations
+    tol: float, optional
+         Tolerance for stopping criterion
+    
+    Returns:
+    x: numpy array, shape (n, 1)
+       Solution vector
+    """
+    x = x_init
+    for i in range(num_iters):
 
-# Define the variable
-x = cp.Variable(n)
+        if i % 100 == 0:
+            lr = lr * 0.001
 
-# Define the objective function
-obj = cp.sum_squares(x)
+        grad = 200 * 2 * A.T @ (A @ x - b)
+        x_new = x - lr * grad
+        if np.linalg.norm(x_new - x) < tol:
+            break
+        
+        x = x_new
+    return x
 
-# Define the constraints
-constraints = [x >= 0]
-
-# Define the problem
-prob = cp.Problem(cp.Minimize(obj), constraints)
-
-# Solve the problem for the initial parameter value
-params.value = params_value
-result = prob.solve()
-
-# Modify the parameter value and solve the problem again
+# Generate random data
+m = 100
 n = 5
-params_value = np.random.randn(n)
-params.value = params_value
-result = prob.solve()
+A = np.random.rand(m, n)
+b = np.random.rand(m, 1)
+
+# Solve least squares problem using gradient descent
+x_init = np.zeros((n, 1))
+x = gradient_descent(A, b, x_init)
+
+x_np = np.linalg.lstsq(A, b, rcond=None)[0]
+
+# Print solution
+
+temp = A @ x - b
+temp2 = A @ x_np - b
+print('cost:', temp)
+# print('cost2:', temp2)
+
+print("Solution: ", x)
