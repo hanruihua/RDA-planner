@@ -157,7 +157,7 @@ class MPC:
         self.ref_path = ref_path
         self.cur_index = 0
 
-        if enable_reverse:
+        if self.enable_reverse:
             self.curve_list = self.split_path(self.ref_path)
             self.curve_index = 0
 
