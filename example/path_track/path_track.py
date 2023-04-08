@@ -21,7 +21,7 @@ def main():
     
     obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 4, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 1, 'cone_type': 'Rpositive'}] # define the number of obstacles in advance
 
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=3, obstacle_template_list=obstacle_template_list, obstacle_order=True)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=1, iter_num=4, obstacle_template_list=obstacle_template_list, obstacle_order=True)
     
     for i in range(500):   
         
