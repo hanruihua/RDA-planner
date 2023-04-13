@@ -623,7 +623,7 @@ class RDA_solver:
     def su_prob_solve(self):
         self.prob_su.solve(solver=cp.ECOS, verbose=False)
 
-        if self.prob_su.status == cp.OPTIMAL:
+        if self.prob_su.status == cp.OPTIMAL or self.prob_su.status == cp.OPTIMAL_INACCURATE:
             return self.indep_s.value, self.indep_u.value, self.indep_dis.value
         else:
             print('No update of state and control vector')
