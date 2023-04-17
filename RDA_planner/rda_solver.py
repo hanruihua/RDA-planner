@@ -66,6 +66,9 @@ class RDA_solver:
 
         self.combine_parameter_define(obstacle_template_list)
 
+        self.combine_variable_define()
+
+
     def state_variable_define(self):
         # decision variables
         self.indep_s = cp.Variable((3, self.T+1), name='state')
@@ -88,6 +91,15 @@ class RDA_solver:
             self.indep_mu_list += [ cp.Variable((self.car_tuple.G.shape[0], self.T+1), name='mu_'+ str(ot['edge_num']) + '_' + str(index)) for index in range(ot['obstacle_num'])]
             self.indep_z_list += [ cp.Variable((1, self.T), nonneg=True, name='z_'+ str(ot['edge_num']) + '_' + str(index)) for index in range(ot['obstacle_num'])]
     
+    def combine_variable_define(self):
+
+        self.indep_Im_array_su = cp.Variable((self.obstacle_template_num, self.T), name='Im_array_su')
+        self.indep_Im_array_LamMuZ =[ cp.Variable((self.T,), name='Im_array_LamMuZ') for i in range(self.obstacle_template_num)]
+
+        self.indep_Hm_array_su = cp.Variable((self.obstacle_template_num * self.T, 2), name='Im_array_su')
+        self.indep_Hm_array_LamMuZ = [ cp.Variable((self.T, 2), name='Hm_array_LamMuZ') for i in range(self.obstacle_template_num)]
+
+
     def state_parameter_define(self):
         
         self.para_ref_s = cp.Parameter((3, self.T+1), name='para_ref_state')
@@ -177,6 +189,9 @@ class RDA_solver:
         self.para_max_sd = cp.Parameter(value=kwargs.get('max_sd', 1.0), nonneg=True)
         self.para_min_sd = cp.Parameter(value=kwargs.get('min_sd', 0.1), nonneg=True)
 
+        self.ro1 = cp.Parameter(value=kwargs.get('ro1', 200), nonneg=True)
+        self.ro2 = cp.Parameter(value=kwargs.get('ro2', 1), nonneg=True)
+
     # endregion
 
     # region: construct the problem
@@ -195,11 +210,11 @@ class RDA_solver:
         ws = kwargs.get('ws', 1)
         wu = kwargs.get('wu', 1)
 
-        ro1 = kwargs.get('ro1', 200)
-        ro2 = kwargs.get('ro2', 1)
+        # ro1 = kwargs.get('ro1', 200)
+        # ro2 = kwargs.get('ro2', 1)
         
         nav_cost, nav_constraints = self.nav_cost_cons(ws, wu)
-        su_cost, su_constraints = self.update_su_cost_cons(self.para_slack_gain, ro1, ro2)
+        su_cost, su_constraints = self.update_su_cost_cons(self.para_slack_gain, self.ro1, self.ro2)
 
         prob_su = cp.Problem(cp.Minimize(nav_cost+su_cost), su_constraints+nav_constraints) 
 
@@ -209,8 +224,9 @@ class RDA_solver:
 
     def construct_LamMuZ_prob(self, **kwargs):
         
-        ro1 = kwargs.get('ro1', 200)
-        ro2 = kwargs.get('ro2', 1) 
+        # ro1 = kwargs.get('ro1', 200)
+        # ro2 = kwargs.get('ro2', 1) 
+
         prob_list = []
 
         for obs_index in range(self.obstacle_template_num):
@@ -218,6 +234,9 @@ class RDA_solver:
             indep_lam = self.indep_lam_list[obs_index]
             indep_mu = self.indep_mu_list[obs_index]
             indep_z = self.indep_z_list[obs_index]
+
+            indep_Im_lamMuZ = self.indep_Im_array_LamMuZ[obs_index]
+            indep_Hm_lamMuZ = self.indep_Hm_array_LamMuZ[obs_index]
 
             para_xi = self.para_xi_list[obs_index]
             para_zeta = self.para_zeta_list[obs_index]
@@ -227,7 +246,7 @@ class RDA_solver:
             para_obsA_rot = self.para_obsA_rot_list[obs_index]
             para_obsA_trans = self.para_obsA_trans_list[obs_index]
 
-            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, self.para_s, self.para_rot_list, para_xi, self.para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, ro1, ro2)
+            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, indep_Im_lamMuZ, indep_Hm_lamMuZ, self.para_s, self.para_rot_list, para_xi, self.para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, self.ro1, self.ro2)
             
             prob = cp.Problem(cp.Minimize(cost), constraints)
 
@@ -254,8 +273,8 @@ class RDA_solver:
 
     def construct_LamMuZ_prob_parallel(self, para_xi_list, para_zeta_list, para_s, para_rot_list, para_dis, para_obstacle_list, para_obsA_rot_list, para_obsA_trans_list, **kwargs):
 
-        ro1 = kwargs.get('ro1', 200)
-        ro2 = kwargs.get('ro2', 1) 
+        # ro1 = kwargs.get('ro1', 200)
+        # ro2 = kwargs.get('ro2', 1) 
 
         prob_list = []
 
@@ -265,6 +284,9 @@ class RDA_solver:
             indep_mu = self.indep_mu_list[obs_index]
             indep_z = self.indep_z_list[obs_index]
 
+            indep_Im_lamMuZ = self.indep_Im_array_LamMuZ[obs_index] # combine variables
+            indep_Hm_lamMuZ = self.indep_Hm_array_LamMuZ[obs_index]
+
             para_xi = para_xi_list[obs_index]
             para_zeta = para_zeta_list[obs_index]
 
@@ -272,7 +294,7 @@ class RDA_solver:
             para_obsA_rot = para_obsA_rot_list[obs_index]
             para_obsA_trans = para_obsA_trans_list[obs_index]
 
-            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, ro1, ro2)
+            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, indep_Im_lamMuZ, indep_Hm_lamMuZ, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, self.ro1, self.ro2)
             
             prob = cp.Problem(cp.Minimize(cost), constraints)
             prob_list.append(prob)
@@ -340,16 +362,20 @@ class RDA_solver:
         Hm_su_array = cp.vstack(Hm_su_list)
 
         constraints += [cp.constraints.zero.Zero(rot_diff_array)]
+
         
-        cost += 0.5*ro1 * cp.sum_squares(cp.neg(Im_su_array))
+        constraints += [self.indep_Im_array_su == Im_su_array]
+        cost += 0.5*ro1 * cp.sum_squares(cp.neg(self.indep_Im_array_su))
         # constraints += [Im_su_array >= 0]
-        cost += 0.5*ro2 * cp.sum_squares(Hm_su_array)
+
+        constraints += [ self.indep_Hm_array_su == Hm_su_array]
+        cost += 0.5*ro2 * cp.sum_squares(self.indep_Hm_array_su)
 
         constraints += self.bound_dis_constraints(self.indep_dis)
 
         return cost, constraints
 
-    def LamMuZ_cost_cons(self, indep_lam, indep_mu, indep_z, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, receding, ro1, ro2):
+    def LamMuZ_cost_cons(self, indep_lam, indep_mu, indep_z, indep_Im_lamMuZ, indep_Hm_lamMuZ, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, receding, ro1, ro2):
 
         cost = 0
         constraints = []
@@ -357,9 +383,12 @@ class RDA_solver:
         Hm_array = self.Hm_LamMu(indep_lam, indep_mu, para_rot_list, para_xi, para_obs, receding, para_obsA_rot)
         Im_array = self.Im_LamMu(indep_lam, indep_mu, indep_z, para_s, para_dis, para_zeta, para_obs, para_obsA_trans)
 
-        cost += 0.5*ro1 * cp.sum_squares(cp.neg(Im_array))
+        constraints += [indep_Im_lamMuZ == Im_array]
+        cost += 0.5*ro1 * cp.sum_squares(cp.neg(indep_Im_lamMuZ))
         # constraints += [ Im_array >= 0 ]
-        cost += 0.5*ro2 * cp.sum_squares(Hm_array)
+
+        constraints += [indep_Hm_lamMuZ == Hm_array]
+        cost += 0.5*ro2 * cp.sum_squares(indep_Hm_lamMuZ)
 
         temp_list = []
         for t in range(self.T):
@@ -368,6 +397,8 @@ class RDA_solver:
             temp_list.append( cp.norm(para_obsAt.T @ indep_lam_t) )
         
         temp = cp.max(cp.vstack(temp_list))
+
+        
 
         constraints += [ temp <= 1 ]
         # constraints += [ cp.norm(para_obs.A.T @ indep_lam, axis=0) <= 1 ]
@@ -381,10 +412,12 @@ class RDA_solver:
     def assign_adjust_parameter(self, **kwargs):
         # self.para_ws.value = kwargs.get('ws', 1)
         # self.para_wu.value = kwargs.get('wu', 1) 
-        self.para_slack_gain = kwargs.get('slack_gain', 8)
-        self.para_max_sd.value = kwargs.get('max_sd', 1.0)
-        self.para_min_sd.value = kwargs.get('min_sd', 0.1)
-    
+
+        self.para_slack_gain.value = kwargs.get('slack_gain', self.para_slack_gain.value)
+        self.para_max_sd.value = kwargs.get('max_sd', self.para_max_sd.value)
+        self.para_min_sd.value = kwargs.get('min_sd', self.para_min_sd.value)
+        self.ro1.value = kwargs.get('ro1', self.ro1.value)
+        self.ro2.value = kwargs.get('ro2', self.ro2.value)
 
     def assign_state_parameter(self, nom_s, nom_u, nom_dis):
 
@@ -508,11 +541,12 @@ class RDA_solver:
 
         # start_time = time.time()
         
+        print(self.ro1.value, self.ro2.value)
+
         self.para_ref_s.value = np.hstack(ref_states)[0:3, :]
         self.para_ref_speed.value = ref_speed
 
         # random.shuffle(obstacle_list)
-
         self.assign_state_parameter(nom_s, nom_u, self.para_dis.value)
         self.assign_obstacle_parameter(obstacle_list)
 

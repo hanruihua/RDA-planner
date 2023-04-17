@@ -27,6 +27,9 @@ def main():
         
         obs_list = env.get_obstacle_list()
         opt_vel, info = mpc_opt.control(env.robot.state, 4, obs_list)
+
+        # mpc_opt.rda.assign_adjust_parameter(ro1=100, ro2=1)
+
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
         env.step(opt_vel, stop=False)

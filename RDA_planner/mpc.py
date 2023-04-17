@@ -78,7 +78,6 @@ class MPC:
 
         self.state = state
 
-
         if self.enable_reverse:
             cur_ref_path = self.curve_list[self.curve_index]
             gear_flag = cur_ref_path[0][-1, 0]
