@@ -541,8 +541,6 @@ class RDA_solver:
 
         # start_time = time.time()
         
-        print(self.ro1.value, self.ro2.value)
-
         self.para_ref_s.value = np.hstack(ref_states)[0:3, :]
         self.para_ref_speed.value = ref_speed
 
