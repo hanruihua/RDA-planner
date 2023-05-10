@@ -246,7 +246,7 @@ class RDA_solver:
             para_obsA_rot = self.para_obsA_rot_list[obs_index]
             para_obsA_trans = self.para_obsA_trans_list[obs_index]
 
-            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, indep_Im_lamMuZ, indep_Hm_lamMuZ, self.para_s, self.para_rot_list, para_xi, self.para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, self.ro1, self.ro2)
+            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, indep_Im_lamMuZ, indep_Hm_lamMuZ, self.para_s, self.para_rot_list, para_xi, self.para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, 1, self.ro2)
             
             prob = cp.Problem(cp.Minimize(cost), constraints)
 
@@ -294,7 +294,7 @@ class RDA_solver:
             para_obsA_rot = para_obsA_rot_list[obs_index]
             para_obsA_trans = para_obsA_trans_list[obs_index]
 
-            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, indep_Im_lamMuZ, indep_Hm_lamMuZ, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, self.ro1, self.ro2)
+            cost, constraints = self.LamMuZ_cost_cons(indep_lam, indep_mu, indep_z, indep_Im_lamMuZ, indep_Hm_lamMuZ, para_s, para_rot_list, para_xi, para_dis, para_zeta, para_obs, para_obsA_rot, para_obsA_trans, self.T, 1, self.ro2)
             
             prob = cp.Problem(cp.Minimize(cost), constraints)
             prob_list.append(prob)
