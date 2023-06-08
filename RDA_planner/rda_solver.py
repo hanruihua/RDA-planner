@@ -654,6 +654,7 @@ class RDA_solver:
     
     def su_prob_solve(self):
         self.prob_su.solve(solver=cp.ECOS, verbose=False)
+        # self.prob_su.solve(solver=cp.SCS, verbose=False)
 
         if self.prob_su.status == cp.OPTIMAL or self.prob_su.status == cp.OPTIMAL_INACCURATE:
             return self.indep_s.value, self.indep_u.value, self.indep_dis.value
@@ -725,6 +726,7 @@ class RDA_solver:
             para_obstacle_list[obs_index]['b'][t+1].value = nom_obs_b[t+1]
         
         prob.solve(solver=cp.ECOS)
+        # prob.solve(solver=cp.SCS)
 
         for variable in prob.variables():
             if 'lam_' in variable.name():
@@ -752,6 +754,7 @@ class RDA_solver:
         
         prob, obs_index = input
         prob.solve(solver=cp.ECOS)
+        # prob.solve(solver=cp.SCS)
 
         indep_lam = self.indep_lam_list[obs_index]
         indep_mu = self.indep_mu_list[obs_index]
