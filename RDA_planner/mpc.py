@@ -11,10 +11,10 @@ import time
 
 from collections import namedtuple
 
-rdaobs = namedtuple('rdaobs', 'A b cone_type')
+rdaobs = namedtuple('rdaobs', 'A b cone_type center vertex')
 
 class MPC:
-    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, **kwargs) -> None:
+    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, **kwargs) -> None:
 
         '''
         Agruments 
@@ -36,9 +36,10 @@ class MPC:
             ro2 (1): The penalty parameter in ADMM.
             init_vel ([0,0]): The initial velocity of the car robot.
             rda_obstacle: if True, the obstacle list can be transported to rda_solver directly, otherwise, it should be converted.
+            obstacle_order: if True, the obstacle list is ordered by the distance to the robot, otherwise, it is not ordered.
         '''
         
-        self.car_tuple = car_tuple # car_tuple: 'G h cone wheelbase max_speed max_acce'
+        self.car_tuple = car_tuple # car_tuple: 'G h cone_type wheelbase max_speed max_acce'
         self.L = car_tuple.wheelbase  # wheel base
 
         self.receding = receding
@@ -46,23 +47,24 @@ class MPC:
 
         self.cur_vel_array = kwargs.get('init_vel', np.zeros((2, receding)))
 
+        self.state = np.zeros((3, 1))
+
         # flag
         self.cur_index = 0
         self.ref_path = ref_path
-
-        start_time = time.time()
-        self.rda = RDA_solver(receding, car_tuple, iter_num=iter_num, **kwargs)
-        print( time.time() - start_time)
+        
+        self.rda = RDA_solver(receding, car_tuple, iter_num=iter_num, step_time=sample_time, **kwargs)
 
         self.enable_reverse = enable_reverse
 
         self.rda_obstacle = rda_obstacle
+        self.obstacle_order= obstacle_order
 
         if enable_reverse:
             self.curve_list = self.split_path(self.ref_path)
             self.curve_index = 0
 
-    def control(self, state,  ref_speed=5, obstacle_list=[],**kwargs):
+    def control(self, state, ref_speed=5, obstacle_list=[], obstacle_order=False, **kwargs):
 
         '''
         state: the robot state (x, y, theta) of current time, 3*1 vector 
@@ -74,6 +76,8 @@ class MPC:
         if np.shape(state)[0] > 3:
             state = state[0:3]
 
+        self.state = state
+
         if self.enable_reverse:
             cur_ref_path = self.curve_list[self.curve_index]
             gear_flag = cur_ref_path[0][-1, 0]
@@ -84,7 +88,7 @@ class MPC:
         state_pre_array, ref_traj_list, self.cur_index = self.pre_process(state, cur_ref_path, self.cur_index, ref_speed, **kwargs)
 
         if not self.rda_obstacle:
-            rda_obs_list = self.convert_rda_obstacle(obstacle_list)
+            rda_obs_list = self.convert_rda_obstacle(obstacle_list, state, self.obstacle_order)
         else:
             rda_obs_list = obstacle_list
         
@@ -113,23 +117,48 @@ class MPC:
 
         return u_opt_array[:, 0:1], info
 
-    def convert_rda_obstacle(self, obstacle_list):
+    def convert_rda_obstacle(self, obstacle_list, state=None, obstacle_order=False):
         rda_obs_list = []
 
         for obs in obstacle_list:
             if obs.cone_type == 'norm2':
                 A, b = self.convert_inequal_circle(obs.center, obs.radius, obs.velocity)
+
+                rda_obs = rdaobs(A, b, obs.cone_type, obs.center, None)
+                rda_obs_list.append(rda_obs)
+
             elif obs.cone_type == 'Rpositive':
                 A, b = self.convert_inequal_polygon(obs.vertex, obs.velocity)
 
-            rda_obs = rdaobs(A, b, obs.cone_type)
-            rda_obs_list.append(rda_obs)
+                rda_obs = rdaobs(A, b, obs.cone_type, None, obs.vertex)
+                rda_obs_list.append(rda_obs)
             
+        
+
+        if obstacle_order:
+            rda_obs_list.sort(key=self.rda_obs_distance)
+
+
         return rda_obs_list
+
+    def rda_obs_distance(self, rda_obs):
+
+        if rda_obs.cone_type == 'norm2':
+            distance= MPC.distance(self.state[0:2], rda_obs.center[0:2])
+        
+        elif rda_obs.cone_type == 'Rpositive':
+            distance = np.min(np.linalg.norm(self.state[0:2]-rda_obs.vertex, axis=0))
+
+        return distance
+            
 
     def update_ref_path(self, ref_path):
         self.ref_path = ref_path
         self.cur_index = 0
+
+        if self.enable_reverse:
+            self.curve_list = self.split_path(self.ref_path)
+            self.curve_index = 0
 
     def update_parameter(self, **kwargs):
         self.rda.assign_adjust_parameter(**kwargs)
@@ -351,5 +380,6 @@ class MPC:
             b[i, 0] = c
 
         return A, b 
+
 
 
