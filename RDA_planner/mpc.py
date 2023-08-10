@@ -53,7 +53,7 @@ class MPC:
         self.cur_index = 0
         self.ref_path = ref_path
         
-        self.rda = RDA_solver(receding, car_tuple, iter_num=iter_num, **kwargs)
+        self.rda = RDA_solver(receding, car_tuple, iter_num=iter_num, step_time=sample_time, **kwargs)
 
         self.enable_reverse = enable_reverse
 
