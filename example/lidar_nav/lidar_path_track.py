@@ -11,7 +11,7 @@ from sklearn.cluster import DBSCAN
 # from pyhull.convex_hull import ConvexHull
 
 # environment
-env = EnvBase('lidar_path_track.yaml', save_ani=False, display=True, full=False)
+env = EnvBase('lidar_path_track.yaml', save_ani=True, display=True, full=True)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
 obs = namedtuple('obstacle', 'center radius vertex cone_type velocity')
 
@@ -86,7 +86,7 @@ def main():
             env.draw_box(obs.vertex, refresh=True)
    
         opt_vel, info = mpc_opt.control(env.robot.state, 4, obs_list)
-        env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
+        env.draw_trajectory(info['opt_state_list'], 'b', refresh=True)
 
         env.step(opt_vel, stop=False)
         env.render(show_traj=True, show_trail=True)
@@ -99,7 +99,7 @@ def main():
             print('arrive at the goal')
             break
 
-    env.end(ani_name='path_track', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
+    env.end(ani_name='path_track', show_traj=True, show_trail=True, ending_time=10, rm_fig_path=False, ani_kwargs={'subrectangles':True})
     
 if __name__ == '__main__':
     main()
