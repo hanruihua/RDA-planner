@@ -89,7 +89,7 @@ def main():
         env.draw_trajectory(info['opt_state_list'], 'b', refresh=True)
 
         env.step(opt_vel, stop=False)
-        env.render(show_traj=True, show_trail=True)
+        env.render(show_traj=True, show_trail=True, show_goal=False)
 
         if env.done():
             env.render_once(show_traj=True, show_trail=True)
