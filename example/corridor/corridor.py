@@ -2,7 +2,7 @@ from ir_sim.env import EnvBase
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
-from GCT.curve_generator import curve_generator
+from gctl.curve_generator import curve_generator
 
 # start and goal point of the robot
 start_point = np.array([[0], [20], [0]])

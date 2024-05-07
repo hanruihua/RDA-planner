@@ -2,7 +2,7 @@ from ir_sim.env import EnvBase
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
-from GCT.curve_generator import curve_generator
+from gctl.curve_generator import curve_generator
 
 env = EnvBase('reverse.yaml', save_ani=False, display=True, full=False)
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
         env.step(opt_vel, stop=False)
-        env.render(0.0001, show_traj=True, show_trail=True)
+        env.render(0.01, show_traj=True, show_trail=True)
         # env.render(0.1, show_traj=True)
          
         if info['arrive']:
