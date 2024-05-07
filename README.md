@@ -21,7 +21,7 @@ pip install -e .
 |:-------------------------:|:-------------------------:|
 **Cross Corridor (example/corridor.py)** | <img src="example\corridor\animation\corridor.gif" width="500" />|
 **Reverse Parking (example/reverse.py)** | <img src="example\reverse\animation\reverse_park.gif" width="400" />
-**Input Lidar points (example/lidar_path_track.py)** | <img src=<img src="example\lidar_nav\animation\path_track.gif" width="400" />
+**Input Lidar points (example/lidar_path_track.py)** | <img src="example\lidar_nav\animation\path_track.gif" width="400" />
 
 
 **Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="example\dynamic_obs\animation\dynamic_obs1.gif" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
