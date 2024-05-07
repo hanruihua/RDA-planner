@@ -6,10 +6,6 @@ The source code of the paper "RDA: An Accelerated Collision Free Motion Planner 
 
 ## Prerequisite
 - Python >= 3.8
-- numpy
-- cvxpy
-- [ir_sim==1.1.9](https://github.com/hanruihua/ir_sim): A python based 2d robot simulator for robotics navigation algorithm. 
-- [GenerateCurveTool](https://github.com/hanruihua/GenerateCurveTool): A tool of generating the common curves from way points for the robot path planning, including dubins path, reeds shepp, etc.
 
 ## Installation 
 
@@ -25,6 +21,7 @@ pip install -e .
 |:-------------------------:|:-------------------------:|
 **Cross Corridor (example/corridor.py)** | <img src="example\corridor\animation\corridor.gif" width="500" />|
 **Reverse Parking (example/reverse.py)** | <img src="example\reverse\animation\reverse_park.gif" width="400" />
+**Input Lidar points (example/lidar_path_track.py)** | <img src=<img src="example\lidar_nav\animation\path_track.gif" width="400" />
 
 
 **Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="example\dynamic_obs\animation\dynamic_obs1.gif" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
