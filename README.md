@@ -1,9 +1,6 @@
  # RDA_planner
 
-The source code of the paper "RDA: An Accelerated Collision Free Motion Planner for Autonomous Navigation in Cluttered Environments" [**RA-Letter**] 
-
 <!-- | **[`PDF_IEEE`](https://ieeexplore.ieee.org/document/10036019)** | **[`PDF_Arxiv`](https://arxiv.org/pdf/2210.00192.pdf)** | **[`Video_Youtube`](https://www.youtube.com/watch?v=qUNMQQRhNFo)** | **[`Video_Bilibili`](https://www.bilibili.com/video/BV1zT411d7aL/?vd_source=cf6ba629063343717a192a5be9fe8985)** |  -->
-
 <div align="center">
 
 <a href="https://ieeexplore.ieee.org/document/10036019"><img src='https://img.shields.io/badge/PDF-RDA planner-red' alt='PDF'></a>
@@ -14,6 +11,10 @@ The source code of the paper "RDA: An Accelerated Collision Free Motion Planner 
 <a href="https://github.com/hanruihua/RDA_planner/blob/main/LICENSE"><img src='https://img.shields.io/badge/License-MIT-yellow' alt='Paper BibTex'></a>
 
 </div>
+
+The source code of the paper "RDA: An Accelerated Collision Free Motion Planner for Autonomous Navigation in Cluttered Environments" [**RA-Letter**] 
+
+
 
 ## Prerequisite
 - Python >= 3.8
