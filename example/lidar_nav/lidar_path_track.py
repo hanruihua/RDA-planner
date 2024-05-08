@@ -3,12 +3,8 @@ import sys
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
-import time
-from scipy.spatial import ConvexHull, convex_hull_plot_2d
 import cv2
-import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
-# from pyhull.convex_hull import ConvexHull
 
 # environment
 env = EnvBase('lidar_path_track.yaml', save_ani=False, display=True, full=False)

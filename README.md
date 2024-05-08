@@ -2,7 +2,18 @@
 
 The source code of the paper "RDA: An Accelerated Collision Free Motion Planner for Autonomous Navigation in Cluttered Environments" [**RA-Letter**] 
 
-| **[`PDF_IEEE`](https://ieeexplore.ieee.org/document/10036019)** | **[`PDF_Arxiv`](https://arxiv.org/pdf/2210.00192.pdf)** | **[`Video_Youtube`](https://www.youtube.com/watch?v=qUNMQQRhNFo)** | **[`Video_Bilibili`](https://www.bilibili.com/video/BV1zT411d7aL/?vd_source=cf6ba629063343717a192a5be9fe8985)** | 
+<!-- | **[`PDF_IEEE`](https://ieeexplore.ieee.org/document/10036019)** | **[`PDF_Arxiv`](https://arxiv.org/pdf/2210.00192.pdf)** | **[`Video_Youtube`](https://www.youtube.com/watch?v=qUNMQQRhNFo)** | **[`Video_Bilibili`](https://www.bilibili.com/video/BV1zT411d7aL/?vd_source=cf6ba629063343717a192a5be9fe8985)** |  -->
+
+<div align="center">
+
+<a href="https://ieeexplore.ieee.org/document/10036019"><img src='https://img.shields.io/badge/PDF-RDA planner-red' alt='PDF'></a>
+<a href="https://arxiv.org/pdf/2210.00192.pdf"><img src='https://img.shields.io/badge/arXiv-2210.00192-red' alt='arXiv'></a>
+<a href="https://www.youtube.com/watch?v=qUNMQQRhNFo"><img src='https://img.shields.io/badge/Youtube-Video-blue' alt='youtube'></a>
+<a href="https://www.bilibili.com/video/BV1zT411d7aL/?vd_source=cf6ba629063343717a192a5be9fe8985"><img src='https://img.shields.io/badge/Bilibili-Video-blue' alt='bilibili'></a>
+<a href="#citation"><img src='https://img.shields.io/badge/BibTex-RDA_planner-lightgreen' alt='Paper BibTex'></a>
+<a href="https://github.com/hanruihua/RDA_planner/blob/main/LICENSE"><img src='https://img.shields.io/badge/License-MIT-yellow' alt='Paper BibTex'></a>
+
+</div>
 
 ## Prerequisite
 - Python >= 3.8
@@ -27,9 +38,6 @@ pip install -e .
 **Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="example\dynamic_obs\animation\dynamic_obs1.gif" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
 |:-------------------------:|:-------------------------:|:-------------------------:|
 
-## Contact
-
-Han Ruihua (hanrh@connect.hku.hk)
 
 
 ## Citation
