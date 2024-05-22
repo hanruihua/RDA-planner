@@ -3,12 +3,16 @@
 
  # RDA Planner
 
-<a href="https://ieeexplore.ieee.org/document/10036019"><img src='https://img.shields.io/badge/PDF-RDA planner-red' alt='PDF'></a>
-<a href="https://arxiv.org/pdf/2210.00192.pdf"><img src='https://img.shields.io/badge/arXiv-2210.00192-red' alt='arXiv'></a>
-<a href="https://www.youtube.com/watch?v=qUNMQQRhNFo"><img src='https://img.shields.io/badge/Youtube-Video-blue' alt='youtube'></a>
-<a href="https://www.bilibili.com/video/BV1zT411d7aL/?vd_source=cf6ba629063343717a192a5be9fe8985"><img src='https://img.shields.io/badge/Bilibili-Video-blue' alt='bilibili'></a>
+<a href="https://ieeexplore.ieee.org/document/10036019"><img src='https://img.shields.io/badge/PDF-RDA planner-brightgreen' alt='PDF'></a>
+<a href="https://arxiv.org/pdf/2210.00192.pdf"><img src='https://img.shields.io/badge/ArXiv-2210.00192-brightgreen' alt='ArXiv'></a>
+<a href="https://github.com/hanruihua/RDA_planner/releases"><img src='https://img.shields.io/github/v/release/hanruihua/RDA_planner?color=orange
+' alt='version'></a>
+<a href="https://www.youtube.com/watch?v=qUNMQQRhNFo"><img src='https://img.shields.io/badge/Video-Youtube-blue' alt='youtube'></a>
+<a href="https://www.bilibili.com/video/BV1zT411d7aL/?vd_source=cf6ba629063343717a192a5be9fe8985"><img src='https://img.shields.io/badge/Video-Bilibili-blue' alt='bilibili'></a>
 <a href="#citation"><img src='https://img.shields.io/badge/BibTex-RDA_planner-lightgreen' alt='Paper BibTex'></a>
 <a href="https://github.com/hanruihua/RDA_planner/blob/main/LICENSE"><img src='https://img.shields.io/badge/License-MIT-yellow' alt='Paper BibTex'></a>
+
+
 
 </div>
 
