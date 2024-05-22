@@ -3,7 +3,7 @@
 
  # RDA Planner
 
-<a href="https://ieeexplore.ieee.org/document/10036019"><img src='https://img.shields.io/badge/PDF-RDA planner-brightgreen' alt='PDF'></a>
+<a href="https://ieeexplore.ieee.org/document/10036019"><img src='https://img.shields.io/badge/PDF-IEEE-brightgreen' alt='PDF'></a>
 <a href="https://arxiv.org/pdf/2210.00192.pdf"><img src='https://img.shields.io/badge/ArXiv-2210.00192-brightgreen' alt='ArXiv'></a>
 <a href="https://github.com/hanruihua/RDA_planner/releases"><img src='https://img.shields.io/github/v/release/hanruihua/RDA_planner?color=orange
 ' alt='version'></a>
