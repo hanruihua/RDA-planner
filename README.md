@@ -15,7 +15,14 @@
 
 </div>
 
-This is the source code of the paper "RDA: An Accelerated Collision Free Motion Planner for Autonomous Navigation in Cluttered Environments" [**RA-Letter**]
+RDA planner is a fast and efficient motion planner for autonomous navigation in cluttered environments. The key idea of RDA is to decompose the complex optimization problem into several subproblems by ADMM, which allows the collision avoidance constraints to be computed in parallel for each obstacle to reduce computation time significantly. 
+
+Features:
+  - shape aware planner, which can tackle robots and obstacles with arbitrary convex shapes.
+  - Highly accurate results achieved through the use of an optimization solver. 
+  - Support for both static and dynamic obstacles
+  - Fast computation time, which is suitable for real-time applications.
+
 
 ## Prerequisite
 - Python >= 3.8
