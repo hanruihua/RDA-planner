@@ -40,7 +40,7 @@ def scan_box(state, scan_data):
         point_array = np.hstack(point_list).T
         labels = DBSCAN(eps=2.0, min_samples=6).fit_predict(point_array)
 
-        for label in labels:
+        for label in np.unique(labels):
             if label == -1:
                 continue
             else:
@@ -69,7 +69,7 @@ def main():
     
     obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 0, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 3, 'cone_type': 'Rpositive'}] # define the number of obstacles in advance
 
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=5, iter_num=5, obstacle_template_list=obstacle_template_list, obstacle_order=True, wu=0.5, slack_gain=5)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=5, iter_num=2, obstacle_template_list=obstacle_template_list, obstacle_order=True, wu=0.5, slack_gain=5)
     
     for i in range(500):   
         
