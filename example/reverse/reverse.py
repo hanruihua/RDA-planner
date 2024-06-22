@@ -24,9 +24,7 @@ if __name__ == '__main__':
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
 
-    obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 4, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 3, 'cone_type': 'Rpositive'}]  # define the number of obstacles in advance
-
-    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, enable_reverse=True, obstacle_template_list=obstacle_template_list)
+    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, enable_reverse=True, max_edge_num=4, max_obs_num=7)
     
     for i in range(500):   
         

@@ -7,36 +7,43 @@ Author: Han Ruihua
 import numpy as np
 from math import inf, sqrt, pi, sin, cos, tan
 from RDA_planner.rda_solver import RDA_solver
-import time
+import yaml
 
 from collections import namedtuple
 
 rdaobs = namedtuple('rdaobs', 'A b cone_type center vertex')
 
 class MPC:
-    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, **kwargs) -> None:
+    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, max_edge_num=5, max_obs_num=5, process_num=4, **kwargs) -> None:
 
         '''
         Agruments 
-            () -- default value; * -- recommended to tune to improve the perfromance.
+            () -- default value; * -- recommended to tune to improve the performance.
 
+            car_tuple: 'G h cone_type wheelbase max_speed max_acce'
+            ref_path: a list of reference points, each point is a 3*1 vector (x, y, theta). if enable_reverse is True, the reference path should be splitted by the gear change.
             *receding (10): The receding horizon for mpc.
             sample_time (0.1): the step time of the world.
             *iter_num (4): The maximum number of iterations in mpc.
             enable_reverse (False): If true, the car-robot can move forward and backward, 
                             and the reference path would be splitted in the change of direction.
-            iter_threshold (0.2): The threshold to stop the iteration. 
-            process_num (4): The number of processes to solve the rda problem. Depends on your computer
-            *slack_gain (8): slack gain value for l1 regularization, see paper for details.
-            *max_sd (1.0): maximum safety distance.
-            *min_sd (0.1): minimum safety distance.
-            ws (1): The wight for the state difference cost.
-            wu (1): The weight for the speed difference cost.
-            *ro1 (200): The penalty parameter in ADMM.
-            ro2 (1): The penalty parameter in ADMM.
-            init_vel ([0,0]): The initial velocity of the car robot.
+
             rda_obstacle: if True, the obstacle list can be transported to rda_solver directly, otherwise, it should be converted.
-            obstacle_order: if True, the obstacle list is ordered by the distance to the robot, otherwise, it is not ordered.
+            obstacle_order: if True, the obstacle list is ordered by the minimum distance to the robot, otherwise, it is not ordered.
+            max_edge_num (5): The maximum number of edges for the polygon obstacle considered in the rda_solver. 
+            max_obs_num (5): The maximum number of obstacles considered in the rda_solver.
+            process_num (4): The number of processes to solve the rda problem. Depends on your computer
+
+            kwargs:
+                *slack_gain (8): slack gain value for l1 regularization, see paper for details.
+                *max_sd (1.0): maximum safety distance.
+                *min_sd (0.1): minimum safety distance.
+                *ro1 (200): The penalty parameter in ADMM.
+                ro2 (1): The penalty parameter in ADMM.
+                iter_threshold (0.2): The threshold to stop the iteration. 
+                ws (1): The wight for the state difference cost.
+                wu (1): The weight for the speed difference cost.
+                init_vel ([0,0]): The initial velocity of the car robot.
         '''
         
         self.car_tuple = car_tuple # car_tuple: 'G h cone_type wheelbase max_speed max_acce'
@@ -53,7 +60,7 @@ class MPC:
         self.cur_index = 0
         self.ref_path = ref_path
         
-        self.rda = RDA_solver(receding, car_tuple, iter_num=iter_num, step_time=sample_time, **kwargs)
+        self.rda = RDA_solver(receding, car_tuple, max_edge_num, max_obs_num, iter_num=iter_num, step_time=sample_time, process_num=process_num, **kwargs)
 
         self.enable_reverse = enable_reverse
 
@@ -64,7 +71,25 @@ class MPC:
             self.curve_list = self.split_path(self.ref_path)
             self.curve_index = 0
 
-    def control(self, state, ref_speed=5, obstacle_list=[], obstacle_order=False, **kwargs):
+
+    # @classmethod
+    # def init_from_yaml(cls, config_file, **kwargs):
+
+    #     # car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, **kwargs
+
+    #     abs_path = file_check(config_file)
+    #     with open(abs_path, 'r') as f:
+    #         config = yaml.safe_load(f)
+    #         config.update(kwargs)
+        
+    #     return cls.init_from_robot(**config)
+
+
+    # @classmethod
+    # def init_from_robot():
+    #     pass
+
+    def control(self, state, ref_speed=5, obstacle_list=[], **kwargs):
 
         '''
         state: the robot state (x, y, theta) of current time, 3*1 vector 
