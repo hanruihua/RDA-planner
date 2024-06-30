@@ -6,7 +6,7 @@ setup(
     py_modules=['RDA_planner'],
     version= '1.3',
     install_requires=[
-        'cvxpy',
+        'cvxpy==1.5.2',
         'numpy',
         'pathos',
         'ir_sim==1.1.11',
