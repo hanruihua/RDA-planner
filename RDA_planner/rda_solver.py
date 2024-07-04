@@ -19,7 +19,7 @@ class RDA_solver:
                        car_tuple, 
                        max_edge_num=5, 
                        max_obs_num=5,
-                       iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, original=False, **kwargs) -> None:
+                       iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, accelerated=True, **kwargs) -> None:
 
         '''
             kwargs:
@@ -43,7 +43,7 @@ class RDA_solver:
         self.acce_bound = np.c_[car_tuple.max_acce] * self.dt 
         self.iter_threshold = iter_threshold
 
-        self.original = original
+        self.accelerated = accelerated
 
         # independ variable and cvxpy parameters definition
         self.definition(**kwargs)
@@ -373,10 +373,11 @@ class RDA_solver:
 
         constraints += [self.indep_Im_array_su == Im_su_array]
         # cost += 0.5*ro1 * cp.sum_squares(cp.neg(self.indep_Im_array_su))
-        if self.original: 
-            cost += 0.5*ro1 * cp.sum_squares(self.indep_Im_array_su)
-        else:
+        if self.accelerated: 
             cost += 0.5*ro1 * cp.sum_squares(cp.neg(self.indep_Im_array_su))
+        else:
+            cost += 0.5*ro1 * cp.sum_squares(self.indep_Im_array_su)
+            
         # constraints += [Im_su_array >= 0]
 
         constraints += [ self.indep_Hm_array_su == Hm_su_array]
@@ -396,11 +397,11 @@ class RDA_solver:
 
         constraints += [indep_Im_lamMuZ == Im_array]
 
-        if self.original:
-            cost += 0.5*ro1 * cp.sum_squares(indep_Im_lamMuZ)
-        else:
+        if self.accelerated:
             cost += 0.5*ro1 * cp.sum_squares(cp.neg(indep_Im_lamMuZ))
-
+        else:
+            cost += 0.5*ro1 * cp.sum_squares(indep_Im_lamMuZ)
+            
         # cost += 0.5*ro1 * cp.sum_squares(cp.neg(indep_Im_lamMuZ))
         # cost += 0.5*ro1 * cp.sum_squares(indep_Im_lamMuZ)
         # constraints += [ Im_array >= 0 ]

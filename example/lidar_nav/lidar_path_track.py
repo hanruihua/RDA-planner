@@ -68,7 +68,7 @@ def main():
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 1.0])
     
     # mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, max_edge_num=4, max_obs_num=3, obstacle_order=True, wu=0.5, slack_gain=10)
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, max_edge_num=4, max_obs_num=3, obstacle_order=True, wu=0.4, slack_gain=10, ro1=12, iter_num=4)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, max_edge_num=4, max_obs_num=3, obstacle_order=True, wu=0.5, slack_gain=10, ro1=10, iter_num=5, accelerated=False)
     
     for i in range(500):   
         
