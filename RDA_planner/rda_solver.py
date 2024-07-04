@@ -95,7 +95,7 @@ class RDA_solver:
 
         self.indep_lam_list = [cp.Variable((self.max_edge_num, self.T+1), name='lam_' + str(index)) for index in range(self.max_obs_num)]
         self.indep_mu_list = [cp.Variable((self.car_tuple.G.shape[0], self.T+1), name='mu_' + str(index)) for index in range(self.max_obs_num)]
-        self.indep_z_list = [cp.Variable((1, self.T), pos=True, name='z_' + str(index)) for index in range(self.max_obs_num)]
+        self.indep_z_list = [cp.Variable((1, self.T), nonneg=True, name='z_' + str(index)) for index in range(self.max_obs_num)]
         # a = 1
 
 
@@ -140,7 +140,7 @@ class RDA_solver:
             self.para_lam_list += [ cp.Parameter((oen, self.T+1), value=0.1*np.zeros((oen, self.T+1)), name='para_lam_'+ str(oen) + '_'  + str(index)) ]
             self.para_mu_list += [ cp.Parameter((ren, self.T+1), value=np.zeros((ren, self.T+1)), name='para_mu_'+ str(oen) + '_'  + str(index)) ]
             # self.para_z_list += [ cp.Parameter((1, self.T), nonneg=True, value=np.zeros((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
-            self.para_z_list += [ cp.Parameter((1, self.T), pos=True, value=np.zeros((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
+            self.para_z_list += [ cp.Parameter((1, self.T), nonneg=True, value=np.zeros((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
             self.para_xi_list += [ cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_xi_'+ str(oen) + '_'  + str(index))]
             self.para_zeta_list += [ cp.Parameter((1, self.T), value = np.zeros((1, self.T)), name='para_zeta_'+ str(oen) + '_' + str(index))]
 
@@ -493,6 +493,13 @@ class RDA_solver:
         self.obstacle_num = len(obstacle_list)
         number = min(self.obstacle_num, self.max_obs_num)
 
+        if number == 0:
+            for para_obs in self.para_obstacle_list:
+                for t in range(len(para_obs['A'])):
+                    para_obs['A'][t].value = np.zeros((self.max_edge_num, 2))
+                    para_obs['b'][t].value =  np.zeros((self.max_edge_num, 1))
+                    para_obs['cone_type'].value = np.array([1, 0])
+            
         # for i, obs in enumerate(obstacle_list):
         for i in range(number):
 
@@ -903,7 +910,7 @@ class RDA_solver:
             A = self.para_A_list[t]
             B = self.para_B_list[t]
             C = self.para_C_list[t]
-            
+
             temp_s1_list.append(A @ indep_st + B @ indep_ut + C)
         
         constraints = [ state[:, 1:] == cp.hstack(temp_s1_list) ]
