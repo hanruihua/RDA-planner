@@ -5,7 +5,7 @@ from collections import namedtuple
 from gctl.curve_generator import curve_generator
 
 # start and goal point of the robot
-start_point = np.array([[0], [20], [0]])
+start_point = np.array([[-10], [20], [0]])
 goal_point = np.array([[60], [20], [0]])
 point_list = [start_point, goal_point]
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
     # mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, max_edge_num=4, max_obs_num=6)
-    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, max_edge_num=4, max_obs_num=6, iter_num=4, ro1=10, accelerated=False, max_sd=0.5, ws=0.1, wu=2.0, receding=20, slack_gain=8)
+    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, max_edge_num=4, max_obs_num=6, iter_num=4, ro1=20, accelerated=False, ws=0.1, receding=20)
     
     for i in range(500):   
         
