@@ -21,7 +21,8 @@ def main():
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 1.0])
     
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=5, iter_num=2, max_edge_num=4, max_obs_num=6, min_sd=0.5, wu=0.2, obstacle_order=True)
+    # mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=5, iter_num=2, max_edge_num=4, max_obs_num=6, min_sd=0.5, wu=0.2, obstacle_order=True)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=5, max_edge_num=4, max_obs_num=6, min_sd=0.5, wu=0.2, obstacle_order=True, ro1=4, iter_num=3, original=True)
     
     for i in range(500):   
         

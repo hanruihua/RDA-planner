@@ -27,7 +27,8 @@ if __name__ == '__main__':
     # obs_list = env.get_obstacle_list()
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
-    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, max_edge_num=4, max_obs_num=6)
+    # mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, max_edge_num=4, max_obs_num=6)
+    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, max_edge_num=4, max_obs_num=6, iter_num=10, ro1=1, original=True, max_sd=1.0, ws=1.0, wu=2.0, obstacle_order=True, receding=15, slack_gain=30)
     
     for i in range(500):   
         

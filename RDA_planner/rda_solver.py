@@ -19,7 +19,7 @@ class RDA_solver:
                        car_tuple, 
                        max_edge_num=5, 
                        max_obs_num=5,
-                       iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, **kwargs) -> None:
+                       iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, original=False, **kwargs) -> None:
 
         '''
             kwargs:
@@ -42,6 +42,8 @@ class RDA_solver:
         self.dt = step_time
         self.acce_bound = np.c_[car_tuple.max_acce] * self.dt 
         self.iter_threshold = iter_threshold
+
+        self.original = original
 
         # independ variable and cvxpy parameters definition
         self.definition(**kwargs)
@@ -93,7 +95,8 @@ class RDA_solver:
 
         self.indep_lam_list = [cp.Variable((self.max_edge_num, self.T+1), name='lam_' + str(index)) for index in range(self.max_obs_num)]
         self.indep_mu_list = [cp.Variable((self.car_tuple.G.shape[0], self.T+1), name='mu_' + str(index)) for index in range(self.max_obs_num)]
-        self.indep_z_list = [cp.Variable((1, self.T), nonneg=True, name='z_' + str(index)) for index in range(self.max_obs_num)]
+        self.indep_z_list = [cp.Variable((1, self.T), pos=True, name='z_' + str(index)) for index in range(self.max_obs_num)]
+        # a = 1
 
 
     def combine_variable_define(self):
@@ -136,7 +139,8 @@ class RDA_solver:
 
             self.para_lam_list += [ cp.Parameter((oen, self.T+1), value=0.1*np.zeros((oen, self.T+1)), name='para_lam_'+ str(oen) + '_'  + str(index)) ]
             self.para_mu_list += [ cp.Parameter((ren, self.T+1), value=np.zeros((ren, self.T+1)), name='para_mu_'+ str(oen) + '_'  + str(index)) ]
-            self.para_z_list += [ cp.Parameter((1, self.T), nonneg=True, value=np.zeros((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
+            # self.para_z_list += [ cp.Parameter((1, self.T), nonneg=True, value=np.zeros((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
+            self.para_z_list += [ cp.Parameter((1, self.T), pos=True, value=np.zeros((1, self.T)), name='para_z_'+ str(oen) + '_'  + str(index))]
             self.para_xi_list += [ cp.Parameter((self.T+1, 2), value=np.zeros((self.T+1, 2)), name='para_xi_'+ str(oen) + '_'  + str(index))]
             self.para_zeta_list += [ cp.Parameter((1, self.T), value = np.zeros((1, self.T)), name='para_zeta_'+ str(oen) + '_' + str(index))]
 
@@ -368,7 +372,11 @@ class RDA_solver:
         constraints += [cp.constraints.zero.Zero(rot_diff_array)]
 
         constraints += [self.indep_Im_array_su == Im_su_array]
-        cost += 0.5*ro1 * cp.sum_squares(cp.neg(self.indep_Im_array_su))
+        # cost += 0.5*ro1 * cp.sum_squares(cp.neg(self.indep_Im_array_su))
+        if self.original: 
+            cost += 0.5*ro1 * cp.sum_squares(self.indep_Im_array_su)
+        else:
+            cost += 0.5*ro1 * cp.sum_squares(cp.neg(self.indep_Im_array_su))
         # constraints += [Im_su_array >= 0]
 
         constraints += [ self.indep_Hm_array_su == Hm_su_array]
@@ -387,7 +395,14 @@ class RDA_solver:
         Im_array = self.Im_LamMu(indep_lam, indep_mu, indep_z, para_s, para_dis, para_zeta, para_obs, para_obsA_trans)
 
         constraints += [indep_Im_lamMuZ == Im_array]
-        cost += 0.5*ro1 * cp.sum_squares(cp.neg(indep_Im_lamMuZ))
+
+        if self.original:
+            cost += 0.5*ro1 * cp.sum_squares(indep_Im_lamMuZ)
+        else:
+            cost += 0.5*ro1 * cp.sum_squares(cp.neg(indep_Im_lamMuZ))
+
+        # cost += 0.5*ro1 * cp.sum_squares(cp.neg(indep_Im_lamMuZ))
+        # cost += 0.5*ro1 * cp.sum_squares(indep_Im_lamMuZ)
         # constraints += [ Im_array >= 0 ]
 
         constraints += [indep_Hm_lamMuZ == Hm_array]
@@ -461,6 +476,8 @@ class RDA_solver:
             self.para_lam_list[index].value = LamMuZ[0]
             self.para_mu_list[index].value = LamMuZ[1]
             self.para_z_list[index].value = LamMuZ[2]
+
+
 
 
     def assign_obstacle_parameter(self, obstacle_list):
