@@ -47,6 +47,7 @@ pip install -e .
 **Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="example\dynamic_obs\animation\dynamic_obs1.gif" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
 |:-------------------------:|:-------------------------:|:-------------------------:|
 
+**Note:** You can customize the scenario by modifying the parameters in the corresponding yaml file as introduced in [ir_sim](https://github.com/hanruihua/ir_sim). For the polygon obstacles, please make sure the order of the vertices is Counterclockwise.
 
 
 ## Citation
