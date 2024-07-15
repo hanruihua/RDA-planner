@@ -20,7 +20,7 @@ class MPC:
         Agruments 
             () -- default value; * -- recommended to tune to improve the performance.
 
-            car_tuple: 'G h cone_type wheelbase max_speed max_acce'
+            car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker or diff
             ref_path: a list of reference points, each point is a 3*1 vector (x, y, theta). if enable_reverse is True, the reference path should be splitted by the gear change.
             *receding (10): The receding horizon for mpc.
             sample_time (0.1): the step time of the world.
@@ -48,6 +48,7 @@ class MPC:
         
         self.car_tuple = car_tuple # car_tuple: 'G h cone_type wheelbase max_speed max_acce'
         self.L = car_tuple.wheelbase  # wheel base
+        self.dynamics = car_tuple.dynamics
 
         self.receding = receding
         self.dt = sample_time
@@ -71,23 +72,6 @@ class MPC:
             self.curve_list = self.split_path(self.ref_path)
             self.curve_index = 0
 
-
-    # @classmethod
-    # def init_from_yaml(cls, config_file, **kwargs):
-
-    #     # car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, **kwargs
-
-    #     abs_path = file_check(config_file)
-    #     with open(abs_path, 'r') as f:
-    #         config = yaml.safe_load(f)
-    #         config.update(kwargs)
-        
-    #     return cls.init_from_robot(**config)
-
-
-    # @classmethod
-    # def init_from_robot():
-    #     pass
 
     def control(self, state, ref_speed=5, obstacle_list=[], **kwargs):
 
@@ -221,7 +205,12 @@ class MPC:
         state_pre_list = [cur_state]
 
         for i in range(self.receding):
-            cur_state = self.motion_predict_model(cur_state, self.cur_vel_array[:, i:i+1], self.L, self.dt)
+
+            if self.dynamics == 'acker':
+                cur_state = self.motion_predict_model_acker(cur_state, self.cur_vel_array[:, i:i+1], self.L, self.dt)
+            elif self.dynamics == 'diff':
+                cur_state = self.motion_predict_model_diff(cur_state, self.cur_vel_array[:, i:i+1], self.dt)
+
             state_pre_list.append(cur_state)
 
             move_len = ref_speed * self.dt
@@ -235,7 +224,7 @@ class MPC:
 
         return state_pre_array, ref_traj_list, min_index
 
-    def motion_predict_model(self, car_state, vel, wheel_base, sample_time):
+    def motion_predict_model_acker(self, car_state, vel, wheel_base, sample_time):
 
         assert car_state.shape == (3, 1) and vel.shape == (2, 1) 
 
@@ -248,6 +237,26 @@ class MPC:
         next_state = car_state + ds * sample_time
 
         return next_state
+    
+
+    def motion_predict_model_diff(self, robot_state, vel, sample_time):
+
+        assert robot_state.shape == (3, 1) and vel.shape == (2, 1) 
+
+        phi = robot_state[2, 0]
+        v = vel[0, 0]
+        w = vel[1, 0]
+
+        ds = np.array([ [v*cos(phi)], [v*sin(phi)], [ w ] ])
+
+        next_state = robot_state + ds * sample_time
+
+        # next_state[2, 0] = wraptopi(next_state[2, 0])
+
+        return next_state
+
+
+
 
     def closest_point(self, state, ref_path, start_ind, threshold=0.1, ind_range=10, **kwargs):
         

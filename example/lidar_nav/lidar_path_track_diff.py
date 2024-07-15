@@ -7,7 +7,7 @@ import cv2
 from sklearn.cluster import DBSCAN
 
 # environment
-env = EnvBase('lidar_path_track.yaml', save_ani=False, display=True, full=False)
+env = EnvBase('lidar_path_track_diff.yaml', save_ani=False, display=True, full=False)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')
 obs = namedtuple('obstacle', 'center radius vertex cone_type velocity')
 
@@ -65,7 +65,7 @@ def scan_box(state, scan_data):
 def main():
     
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.wheelbase, [10, 1], [10, 0.5], 'acker')
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.wheelbase, [10, 1], [10, 0.5], 'diff')
     
     mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, max_edge_num=4, max_obs_num=3, obstacle_order=True, wu=1.0, slack_gain=10)
     

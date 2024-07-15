@@ -32,11 +32,12 @@ class RDA_solver:
 
         # setting
         self.T = receding
-        self.car_tuple = car_tuple # car_tuple: 'G h cone_type wheelbase max_speed max_acce'
+        self.car_tuple = car_tuple # car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics'
         self.L = car_tuple.wheelbase
         self.max_speed = np.c_[self.car_tuple.max_speed]
         self.max_obs_num = max_obs_num
         self.max_edge_num = max_edge_num
+        self.dynamics = car_tuple.dynamics
 
         self.iter_num = iter_num
         self.dt = step_time
@@ -430,8 +431,11 @@ class RDA_solver:
         for t in range(self.T):
             nom_st = nom_s[:, t:t+1]
             nom_ut = nom_u[:, t:t+1]
-            
-            A, B, C = self.linear_ackermann_model(nom_st, nom_ut, self.dt, self.L)
+
+            if self.dynamics == 'acker':
+                A, B, C = self.linear_ackermann_model(nom_st, nom_ut, self.dt, self.L)
+            elif self.dynamics == 'diff':
+                A, B, C = self.linear_diff_model(nom_st, nom_ut, self.dt)
 
             self.para_A_list[t].value = A
             self.para_B_list[t].value = B
@@ -927,6 +931,23 @@ class RDA_solver:
                         [ -psi * v*dt / ( L * (cos(psi))**2) ]])
 
         return A, B, C
+
+
+    def linear_diff_model(self, nom_state, nom_u, dt):
+        
+        phi = nom_state[2, 0]
+        v = nom_u[0, 0]
+
+        A = np.array([ [1, 0, -v * dt * sin(phi)], [0, 1, v * dt * cos(phi)], [0, 0, 1] ])
+
+        B = np.array([ [cos(phi)*dt, 0], [sin(phi)*dt, 0], 
+                        [ 0, dt ] ])
+
+        C = np.array([ [ phi*v*sin(phi)*dt ], [ -phi*v*cos(phi)*dt ], 
+                        [ 0 ]])
+                
+        return A, B, C
+
 
     def C0_cost(self, ref_s, ref_speed, state, speed, ws, wu):
 
