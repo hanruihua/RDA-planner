@@ -14,7 +14,8 @@ setup(
         'gctl==1.1',
         'opencv-python',
         'imageio',
-        'scikit-learn'
+        'scikit-learn',
+        'scikit-image',
     ],
     description="The source code of optimization based RDA motion planner",
     author="Han Ruihua"
