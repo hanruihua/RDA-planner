@@ -14,7 +14,7 @@ from collections import namedtuple
 rdaobs = namedtuple('rdaobs', 'A b cone_type center vertex')
 
 class MPC:
-    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, max_edge_num=5, max_obs_num=5, process_num=4, **kwargs) -> None:
+    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, max_edge_num=5, max_obs_num=5, process_num=4, accelerated=True, **kwargs) -> None:
 
         '''
         Agruments 
@@ -33,6 +33,7 @@ class MPC:
             max_edge_num (5): The maximum number of edges for the polygon obstacle considered in the rda_solver. 
             max_obs_num (5): The maximum number of obstacles considered in the rda_solver.
             process_num (4): The number of processes to solve the rda problem. Depends on your computer
+            accelerated: if True, accelerated ADMM is used in the rda_solver.  True by default, if False, please reduce the ro1 and add the iter_num to make the solver converge.
 
             kwargs:
                 *slack_gain (8): slack gain value for l1 regularization, see paper for details.
@@ -61,7 +62,7 @@ class MPC:
         self.cur_index = 0
         self.ref_path = ref_path
         
-        self.rda = RDA_solver(receding, car_tuple, max_edge_num, max_obs_num, iter_num=iter_num, step_time=sample_time, process_num=process_num, **kwargs)
+        self.rda = RDA_solver(receding, car_tuple, max_edge_num, max_obs_num, iter_num=iter_num, step_time=sample_time, process_num=process_num, accelerated=accelerated, **kwargs)
 
         self.enable_reverse = enable_reverse
 
