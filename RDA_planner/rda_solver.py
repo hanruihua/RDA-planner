@@ -499,6 +499,7 @@ class RDA_solver:
                 obs_edge_num = obs.A.shape[0]
 
                 for t in range(len(para_obs['A'])):
+                    
                     para_obs['A'][t].value[:obs_edge_num, :] = obs.A
                     para_obs['b'][t].value[:obs_edge_num, :] = obs.b
 

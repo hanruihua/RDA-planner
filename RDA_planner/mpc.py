@@ -243,7 +243,6 @@ class MPC:
 
         v = vel[0, 0]
         psi = vel[1, 0]
-
         ds = np.array([ [v*cos(phi)], [v*sin(phi)], [ v*tan(psi) / wheel_base ] ])  
     
         next_state = car_state + ds * sample_time
