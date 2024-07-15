@@ -798,12 +798,12 @@ class RDA_solver:
         Im_list = []
 
         for t in range(self.T):
-            para_lam_t = para_lam[:, t+1:t+2]
+            # para_lam_t = para_lam[:, t+1:t+2]
             indep_trans_t = state[0:2, t+1:t+2]
             para_mu_t = para_mu[:, t+1:t+2]
 
-            para_obsAt = para_obs['A'][t+1]
-            para_obsbt = para_obs['b'][t+1]
+            # para_obsAt = para_obs['A'][t+1]
+            # para_obsbt = para_obs['b'][t+1]
 
             para_obsA_lam_t = para_obsA_lam[t+1:t+2, :]
             para_obsb_lam_t = para_obsb_lam[t+1:t+2, :]
