@@ -17,7 +17,7 @@ ref_path_list = cg.generate_curve('dubins', point_list, 0.1, 5)
 robot_init_point = np.zeros((4, 1))
 robot_init_point[0:3] = ref_path_list[0][0:3]
 
-env = EnvBase('corridor.yaml', save_ani=False, full=False, display=True, robot_args={'state': robot_init_point, 'goal':goal_point})
+env = EnvBase('corridor.yaml', save_ani=False, full=False, display=True)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')  # robot information
 
 env.draw_trajectory(ref_path_list, traj_type='-k')
@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     # obs_list = env.get_obstacle_list()
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.wheelbase, [10, 1], [10, 0.5])
     mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, max_edge_num=4, max_obs_num=6)
     
     for i in range(500):   

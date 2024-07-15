@@ -9,7 +9,7 @@ env = EnvBase('reverse.yaml', save_ani=False, display=True, full=False)
 # start and goal point of the robot
 point1 = np.array([ [5], [40], [0]])
 point2 = np.array([ [35], [11], [-3.14]])
-point3 = np.array([ [43.8], [11], [-3.14]])
+point3 = np.array([ [46], [11], [-3.14]])
 point_list = [env.robot.state[0:3], point1, point2, point3]
 
 cg = curve_generator()
@@ -22,7 +22,7 @@ env.draw_trajectory(ref_path_list, traj_type='-k')
 if __name__ == '__main__':
 
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.wheelbase, [10, 1], [10, 0.5])
 
     mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, enable_reverse=True, max_edge_num=4, max_obs_num=7)
     

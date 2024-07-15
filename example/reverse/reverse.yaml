@@ -4,32 +4,31 @@ world:
   step_time: 0.1
   sample_time: 0.1
   offset: [5, 5]
+  collision_mode: 'stop'  # 'stop', 'unobstructed', 'reactive'
+  control_mode: 'auto'  # 'keyboard', 'auto'
 
-robots:
-  type: 'robot_acker'  # # robot_omni, robot_diff, robot_acker
-  number: 1
-  state: [5, 40, 0, 0]  
-  shape: [4.6, 1.6, 3, 1.6] # for acker (default)
-  goal: [40, 40, 0] 
-  vel_type: 'steer'
-  vel_min: [-8, -1]
-  vel_max: [8, 1]
-  psi_limit: 1
-  arrive_mode: 'state'
-  
-obstacles:
-  - type: 'obstacle_polygon'
-    number: 0
-    distribute: {mode: 'manual', 
-                 states: [[0, 0, 0], [0, 0, 0]],
-                 shapes: [ [[31, 24], [33, 24], [33, 28], [31, 28]], [[5, 46], [15, 46], [15, 50], [5, 50]] ] } 
+robot:
+  - kinematics: {name: 'acker'} 
+    shape: {name: 'rectangle', length: 4.6, width: 1.6, wheelbase: 3}
+    state: [5, 40, 0, 0] 
+    goal: [46, 11, 0] 
+    vel_min: [-8, -1]
+    vel_max: [8, 1]
+    goal_threshold: 0.3
 
-  - type: 'obstacle_circle'
-    number: 4
-    distribute: {mode: 'manual', states: [[20, 27], [15, 33], [25, 22], [30, 20], [20, 13], [16, 26], [10, 24], [18, 20], [16, 26], [19, 26], [10, 30]], shapes: [1.0]}  # shapes: radiuses 
+obstacle:
+  - number: 6
+    distribution: {name: 'manual'}
+    shape:
+      - {name: 'circle', radius: 1.0} 
+      
+    state: [[20, 27], [15, 33], [25, 22], [30, 20], [20, 13], [16, 26]]
 
-  - type: 'obstacle_line'
-    number: 3
-
-    # distribute: {mode: 'random', rlow: [0.0, 0.0, -3.14], rhigh: [10.0, 10.0, 3.14], distance: 1, shapes: [[0.5, 0.4], [0.4, 0.2]], random_shape: True, shapes_low: [0.1, 0.1], shapes_high: [0.8, 0.8]}
-    distribute: {mode: 'manual', states: [ [45, 10, -3.14], [45, 12, -3.14], [45, 10, 1.57], ], shapes: [[5, 0.2], [5, 0.2], [2, 0.2]]}
+  - number: 3
+    distribution: {name: 'manual'}
+    shape:
+      - {name: 'rectangle', length: 5, width: 0.2}
+      - {name: 'rectangle', length: 5, width: 0.2}
+      - {name: 'rectangle', length: 2.5, width: 0.2}
+      
+    state: [[45, 9.75, -3.14], [45, 12.25, -3.14], [47.5, 11.0, 1.57]]

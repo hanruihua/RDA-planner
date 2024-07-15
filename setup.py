@@ -9,7 +9,7 @@ setup(
         'cvxpy==1.5.2',
         'numpy',
         'pathos',
-        'ir_sim==1.1.11',
+        'ir_sim==2.1.1',
         'matplotlib',
         'gctl==1.1',
         'opencv-python',
