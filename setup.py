@@ -4,7 +4,7 @@ import sys
 setup(
     name='RDA_planner',
     py_modules=['RDA_planner'],
-    version= '1.3',
+    version= '2.1',
     install_requires=[
         'cvxpy==1.5.2',
         'numpy',
