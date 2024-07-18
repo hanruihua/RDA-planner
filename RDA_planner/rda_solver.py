@@ -478,7 +478,7 @@ class RDA_solver:
 
         self.obstacle_num = len(obstacle_list)
         number = min(self.obstacle_num, self.max_obs_num)
-
+        
         # for i, obs in enumerate(obstacle_list):
         for i in range(number):
 
@@ -547,6 +547,12 @@ class RDA_solver:
                 
                 self.para_obsA_rot_list[n][t+1].value = obsA @ rot
                 self.para_obsA_trans_list[n][t+1].value = obsA @ trans
+
+        if self.obstacle_num == 0:
+
+            for t in range(self.T):
+                self.para_obsA_lam_list[n].value[t+1, :] = 0
+                self.para_obsb_lam_list[n].value[t+1, :] = 0
 
     # endregion
     
