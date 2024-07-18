@@ -558,10 +558,10 @@ class RDA_solver:
                 self.para_obsA_trans_list[n][t+1].value = obsA @ trans
 
         if self.obstacle_num == 0:
+            for index in range(self.max_obs_num):
+                self.para_obsA_lam_list[index].value = np.zeros((self.T+1, 2))
+                self.para_obsb_lam_list[index].value = np.zeros((self.T+1, 1))
 
-            for t in range(self.T):
-                self.para_obsA_lam_list[n].value[t+1, :] = 0
-                self.para_obsb_lam_list[n].value[t+1, :] = 0
 
     # endregion
     
