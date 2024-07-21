@@ -20,7 +20,7 @@ class MPC:
         Agruments 
             () -- default value; * -- recommended to tune to improve the performance.
 
-            car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker or diff
+            car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker, diff, or omni
             ref_path: a list of reference points, each point is a 3*1 vector (x, y, theta). if enable_reverse is True, the reference path should be splitted by the gear change.
             *receding (10): The receding horizon for mpc.
             sample_time (0.1): the step time of the world.
