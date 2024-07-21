@@ -48,7 +48,11 @@ def main():
             print('arrive at the goal')
             break
 
+<<<<<<< HEAD
     env.end(ani_name='path_track_omni', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
+=======
+    env.end(ani_name='path_track', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
+>>>>>>> for omni
     
 if __name__ == '__main__':
     main()
