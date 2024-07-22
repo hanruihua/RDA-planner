@@ -28,7 +28,7 @@ obstacle:
       - {name: 'circle', radius: 1.5}  # radius
       - {name: 'circle', radius: 1.0}  # radius
 
-  - number: 1
+  - number: 0
     distribution: {name: 'manual'}
     shape:
       - {name: 'polygon', vertices: [[31, 24], [33, 24], [33, 28], [31, 28]]}

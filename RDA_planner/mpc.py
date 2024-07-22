@@ -21,6 +21,10 @@ class MPC:
             () -- default value; * -- recommended to tune to improve the performance.
 
             car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker, diff, or omni
+                dynamics: 'acker', velocity: linear speed and steering angle. 
+                dynamics: 'diff', velocity: linear speed and angular speed.  
+                dynamics: 'omni', velocity: linear speed and velocity angle.  
+                    
             ref_path: a list of reference points, each point is a 3*1 vector (x, y, theta). if enable_reverse is True, the reference path should be splitted by the gear change.
             *receding (10): The receding horizon for mpc.
             sample_time (0.1): the step time of the world.
@@ -263,9 +267,13 @@ class MPC:
 
         assert robot_state.shape[0] >= 2 and vel.shape == (2, 1) 
 
-        next_position = robot_state[0:2] + sample_time * vel
+        # vx = vel[0, 0] * cos(vel[1, 0])
+        # vy = vel[0, 0] * sin(vel[1, 0])
+        # omni_vel = np.array([[vx], [vy], [0]])
 
-        next_state = np.row_stack((next_position, robot_state[2, 0]))
+        ds = np.row_stack((vel, [0]))
+
+        next_state = robot_state + sample_time * ds
 
         return next_state
 
