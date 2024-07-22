@@ -4,6 +4,7 @@ import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
 import time
+from math import cos, sin
 
 # environment
 env = EnvBase('path_track_omni.yaml', save_ani=False, display=True, full=False)
@@ -17,7 +18,7 @@ env.draw_trajectory(ref_path_list, traj_type='-k') # plot path
 def main():
     
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 10], [5, 5], 'omni')
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 3.14], [5, 0.5], 'omni')
     
     mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, obstacle_order=True, ro1=300, max_edge_num=4, max_obs_num=11, slack_gain=8, ws=0.1)
     

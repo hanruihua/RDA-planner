@@ -446,7 +446,7 @@ class RDA_solver:
             elif self.dynamics == 'diff':
                 A, B, C = self.linear_diff_model(nom_st, nom_ut, self.dt)
             elif self.dynamics == 'omni':
-                A, B, C = self.linear_omni_model(self.dt)
+                A, B, C = self.linear_omni_model(nom_ut, self.dt)
 
             self.para_A_list[t].value = A
             self.para_B_list[t].value = B
@@ -966,26 +966,51 @@ class RDA_solver:
         return A, B, C
 
 
-    def linear_omni_model(self, dt):
+    # def linear_omni_model(self, nom_u, dt):
         
+    #     phi = nom_u[1, 0]
+    #     v = nom_u[0, 0]
+
+    #     A = np.identity(3)
+    #     B = np.array([ [ cos(phi) * dt, -v * sin(phi)* dt], [sin(phi)* dt, v*cos(phi) * dt], 
+    #                     [ 0, 0 ] ])
+
+    #     C = np.array([ [ v * cos(phi) - v * (cos(phi))**2 + v**2 * (sin(phi))**2  ], [ v * sin(phi) - v * cos(phi) * sin(phi) - v**2 * cos(phi) * sin(phi) ], 
+    #                     [ 0 ]]) * dt
+        
+    #     return A, B, C
+    
+
+    def linear_omni_model(self, nom_u, dt):
+        
+        phi = nom_u[1, 0]
+        v = nom_u[0, 0]
+
         A = np.identity(3)
         B = np.array([ [dt, 0], [0, dt], 
                         [ 0, 0 ] ])
-
+        
         C = np.zeros((3, 1))
         
         return A, B, C
-
+    
 
     def C0_cost(self, ref_s, ref_speed, state, control_u, ws, wu):
 
         if self.dynamics == 'omni':
 
             # temp = cp.norm(cp.norm(control_u, axis=0) - ref_speed)
+            speed = control_u[0, :]
             diff_s = (state - ref_s)
-            return ws * cp.sum_squares(diff_s[0:2])
+
+            temp = cp.norm(control_u, axis=0)
+            # diff_u = (speed - ref_speed)
+            
+            return ws * cp.sum_squares(diff_s[0:2]) 
+            # return ws * cp.sum_squares(diff_s[0:2]) + wu*cp.sum_squares(diff_u) 
         else:
             speed = control_u[0, :]
+
             diff_s = (state - ref_s)
             diff_u = (speed - ref_speed)
 
