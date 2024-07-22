@@ -14,14 +14,12 @@ npy_path = sys.path[0] + '/path_track_ref.npy'
 ref_path_list = list(np.load(npy_path, allow_pickle=True))
 env.draw_trajectory(ref_path_list, traj_type='-k') # plot path
 
-
-
 def main():
     
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5], 'diff')
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 10], [5, 5], 'omni')
     
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, obstacle_order=True, ro1=300, max_edge_num=4, max_obs_num=11, slack_gain=8)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, obstacle_order=True, ro1=300, max_edge_num=4, max_obs_num=11, slack_gain=8, ws=0.1)
     
     for i in range(500):   
         
@@ -31,6 +29,7 @@ def main():
         # mpc_opt.rda.assign_adjust_parameter(ro1=100, ro2=1)
 
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
+        env.draw_trajectory(info['ref_traj_list'], 'y', refresh=True)
 
         env.step(opt_vel, stop=False)
     
