@@ -211,6 +211,9 @@ class MPC:
                 cur_state = self.motion_predict_model_acker(cur_state, self.cur_vel_array[:, i:i+1], self.L, self.dt)
             elif self.dynamics == 'diff':
                 cur_state = self.motion_predict_model_diff(cur_state, self.cur_vel_array[:, i:i+1], self.dt)
+            
+            elif self.dynamics == 'omni':
+                cur_state = self.motion_predict_model_omni(cur_state, self.cur_vel_array[:, i:i+1], self.dt)
 
             state_pre_list.append(cur_state)
 
@@ -253,6 +256,16 @@ class MPC:
         next_state = robot_state + ds * sample_time
 
         # next_state[2, 0] = wraptopi(next_state[2, 0])
+
+        return next_state
+    
+    def motion_predict_model_omni(self, robot_state, vel, sample_time):
+
+        assert robot_state.shape[0] >= 2 and vel.shape == (2, 1) 
+
+        next_position = robot_state[0:2] + sample_time * vel
+
+        next_state = np.row_stack((next_position, robot_state[2, 0]))
 
         return next_state
 

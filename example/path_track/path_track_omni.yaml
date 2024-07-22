@@ -10,10 +10,10 @@ world:
 robot:
   - kinematics: {name: 'omni'} 
     shape: {name: 'rectangle', length: 4.6, width: 1.6, wheelbase: 0}
-    state: [10, 42, 1.57] 
+    state: [10, 42, 0] 
     goal: [40, 40, 0] 
-    vel_min: [-8, -1]
-    vel_max: [8, 1]
+    vel_min: [-8, -8]
+    vel_max: [8, 8]
     goal_threshold: 0.3
     plot:
       show_trail: True
