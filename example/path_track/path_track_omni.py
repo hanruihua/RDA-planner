@@ -7,7 +7,7 @@ import time
 from math import cos, sin
 
 # environment
-env = EnvBase('path_track_omni.yaml', save_ani=False, display=True, full=False)
+env = EnvBase('path_track_omni.yaml', save_ani=True, display=True, full=True)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')
 
 # saved ref path
