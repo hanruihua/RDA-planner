@@ -20,7 +20,11 @@ class MPC:
         Agruments 
             () -- default value; * -- recommended to tune to improve the performance.
 
-            car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker or diff
+            car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker, diff, or omni
+                dynamics: 'acker', velocity: linear speed and steering angle. 
+                dynamics: 'diff', velocity: linear speed and angular speed.  
+                dynamics: 'omni', velocity: linear speed and velocity angle.  
+                    
             ref_path: a list of reference points, each point is a 3*1 vector (x, y, theta). if enable_reverse is True, the reference path should be splitted by the gear change.
             *receding (10): The receding horizon for mpc.
             sample_time (0.1): the step time of the world.
@@ -211,6 +215,9 @@ class MPC:
                 cur_state = self.motion_predict_model_acker(cur_state, self.cur_vel_array[:, i:i+1], self.L, self.dt)
             elif self.dynamics == 'diff':
                 cur_state = self.motion_predict_model_diff(cur_state, self.cur_vel_array[:, i:i+1], self.dt)
+            
+            elif self.dynamics == 'omni':
+                cur_state = self.motion_predict_model_omni(cur_state, self.cur_vel_array[:, i:i+1], self.dt)
 
             state_pre_list.append(cur_state)
 
@@ -253,6 +260,21 @@ class MPC:
         next_state = robot_state + ds * sample_time
 
         # next_state[2, 0] = wraptopi(next_state[2, 0])
+
+        return next_state
+    
+    def motion_predict_model_omni(self, robot_state, vel, sample_time):
+
+        assert robot_state.shape[0] >= 2 and vel.shape == (2, 1) 
+
+        vx = vel[0, 0] * cos(vel[1, 0])
+        vy = vel[0, 0] * sin(vel[1, 0])
+        omni_vel = np.array([[vx], [vy], [0]])
+
+        next_state = robot_state + sample_time * omni_vel
+
+        # ds = np.row_stack((vel, [0]))
+        # next_state = robot_state + sample_time * ds
 
         return next_state
 

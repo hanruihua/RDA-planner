@@ -318,7 +318,7 @@ class RDA_solver:
         cost = 0
         constraints = []
 
-        cost += self.C0_cost(self.para_ref_s, self.para_ref_speed, self.indep_s, self.indep_u[0, :], ws, wu)
+        cost += self.C0_cost(self.para_ref_s, self.para_ref_speed, self.indep_s, self.indep_u, ws, wu)
 
         constraints += self.dynamics_constraint(self.indep_s, self.indep_u, self.T)
         constraints += self.bound_su_constraints(self.indep_s, self.indep_u, self.para_s, self.max_speed, self.acce_bound)
@@ -445,6 +445,8 @@ class RDA_solver:
                 A, B, C = self.linear_ackermann_model(nom_st, nom_ut, self.dt, self.L)
             elif self.dynamics == 'diff':
                 A, B, C = self.linear_diff_model(nom_st, nom_ut, self.dt)
+            elif self.dynamics == 'omni':
+                A, B, C = self.linear_omni_model(nom_ut, self.dt)
 
             self.para_A_list[t].value = A
             self.para_B_list[t].value = B
@@ -558,10 +560,10 @@ class RDA_solver:
                 self.para_obsA_trans_list[n][t+1].value = obsA @ trans
 
         if self.obstacle_num == 0:
-            for index in range(self.max_obs_num):
-                self.para_obsA_lam_list[index].value = np.zeros((self.T+1, 2))
-                self.para_obsb_lam_list[index].value = np.zeros((self.T+1, 1))
 
+            for t in range(self.T):
+                self.para_obsA_lam_list[n].value[t+1, :] = 0
+                self.para_obsb_lam_list[n].value[t+1, :] = 0
 
     # endregion
     
@@ -964,12 +966,54 @@ class RDA_solver:
         return A, B, C
 
 
-    def C0_cost(self, ref_s, ref_speed, state, speed, ws, wu):
+    def linear_omni_model(self, nom_u, dt):
+        
+        phi = nom_u[1, 0]
+        v = nom_u[0, 0]
 
-        diff_s = (state - ref_s)
-        diff_u = (speed - ref_speed)
+        A = np.identity(3)
+        B = np.array([ [ cos(phi) * dt, -v * sin(phi)* dt], [sin(phi)* dt, v*cos(phi) * dt], 
+                        [ 0, 0 ] ])
 
-        return ws * cp.sum_squares(diff_s) + wu*cp.sum_squares(diff_u) 
+        C = np.array([ [ phi*v*sin(phi)*dt ], [ -phi*v*cos(phi)*dt ], 
+                        [ 0 ]])
+        
+        return A, B, C
+    
+
+    # def linear_omni_model(self, nom_u, dt):
+        
+    #     phi = nom_u[1, 0]
+    #     v = nom_u[0, 0]
+
+    #     A = np.identity(3)
+    #     B = np.array([ [dt, 0], [0, dt], 
+    #                     [ 0, 0 ] ])
+        
+    #     C = np.zeros((3, 1))
+        
+    #     return A, B, C
+    
+
+    def C0_cost(self, ref_s, ref_speed, state, control_u, ws, wu):
+
+        if self.dynamics == 'omni':
+
+            # temp = cp.norm(cp.norm(control_u, axis=0) - ref_speed)
+            speed = control_u[0, :]
+            diff_s = (state - ref_s)
+            diff_u = (speed - ref_speed)
+            # temp = cp.norm(control_u, axis=0)
+            
+            # return ws * cp.sum_squares(diff_s[0:2]) 
+            return ws * cp.sum_squares(diff_s[0:2]) + wu*cp.sum_squares(diff_u) 
+        else:
+            speed = control_u[0, :]
+
+            diff_s = (state - ref_s)
+            diff_u = (speed - ref_speed)
+
+            return ws * cp.sum_squares(diff_s) + wu*cp.sum_squares(diff_u) 
 
     def C1_cost(self, indep_dis, slack_gain):
         return ( -slack_gain * cp.sum(indep_dis) )
