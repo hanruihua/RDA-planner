@@ -267,13 +267,14 @@ class MPC:
 
         assert robot_state.shape[0] >= 2 and vel.shape == (2, 1) 
 
-        # vx = vel[0, 0] * cos(vel[1, 0])
-        # vy = vel[0, 0] * sin(vel[1, 0])
-        # omni_vel = np.array([[vx], [vy], [0]])
+        vx = vel[0, 0] * cos(vel[1, 0])
+        vy = vel[0, 0] * sin(vel[1, 0])
+        omni_vel = np.array([[vx], [vy], [0]])
 
-        ds = np.row_stack((vel, [0]))
+        next_state = robot_state + sample_time * omni_vel
 
-        next_state = robot_state + sample_time * ds
+        # ds = np.row_stack((vel, [0]))
+        # next_state = robot_state + sample_time * ds
 
         return next_state
 
