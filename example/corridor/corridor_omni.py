@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from irsim.env import EnvBase
+=======
+from ir_sim.env import EnvBase
+>>>>>>> add omni dynamics
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple

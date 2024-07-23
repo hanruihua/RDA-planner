@@ -9,7 +9,10 @@ world:
 
 robot:
   - kinematics: {name: 'omni'} 
+<<<<<<< HEAD
     state_dim: 3
+=======
+>>>>>>> add omni dynamics
     shape: {name: 'rectangle', length: 3.0, width: 1.6, wheelbase: 0}
     state: [0, 20, 0] 
     goal: [60, 20, 0] 

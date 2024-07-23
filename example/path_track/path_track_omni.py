@@ -36,7 +36,11 @@ def main():
         vy = opt_vel[0, 0] * sin(opt_vel[1, 0])
         omni_vel = np.array([[vx], [vy]])
 
+<<<<<<< HEAD
         env.step(omni_vel)
+=======
+        env.step(omni_vel, stop=False)
+>>>>>>> add omni dynamics
         # env.step(opt_vel, stop=False)
     
         env.render(show_traj=True, show_trail=True)

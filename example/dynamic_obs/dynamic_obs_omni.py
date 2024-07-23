@@ -2,7 +2,11 @@ import sys
 import time
 from collections import namedtuple
 import numpy as np
+<<<<<<< HEAD
 from irsim.env import EnvBase
+=======
+from ir_sim.env import EnvBase
+>>>>>>> add omni dynamics
 from RDA_planner.mpc import MPC
 from math import cos, sin
 
