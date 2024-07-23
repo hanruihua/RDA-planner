@@ -7,7 +7,7 @@ import time
 from math import cos, sin
 
 # environment
-env = EnvBase('path_track_omni.yaml', save_ani=False, display=True, full=False)
+env = EnvBase('path_track_omni.yaml', save_ani=True, display=True, full=True)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')
 
 # saved ref path
@@ -48,7 +48,7 @@ def main():
             print('arrive at the goal')
             break
 
-    env.end(ani_name='path_track', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
+    env.end(ani_name='path_track_omni', show_traj=True, show_trail=True, ending_time=10, ani_kwargs={'subrectangles':True})
     
 if __name__ == '__main__':
     main()
