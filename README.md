@@ -22,6 +22,7 @@ Features:
   - Highly accurate control achieved through the use of an optimization solver. 
   - Support for both static and dynamic obstacles
   - Fast computation time, which is suitable for real-time applications.
+  - Support different types of dynamics, including differential, Ackermann, and omnidirectional robots.
 
 
 ## Prerequisite
