@@ -18,9 +18,9 @@ env.draw_trajectory(ref_path_list, traj_type='-k') # plot path
 def main():
     
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 3.14], [5, 0.5], 'omni')
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 6.28], [5, 2], 'omni')
     
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, obstacle_order=True, ro1=300, max_edge_num=4, max_obs_num=11, slack_gain=8, ws=0.1)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=3, obstacle_order=True, ro1=300, max_edge_num=4, max_obs_num=11, slack_gain=15, max_sd=1.0, ws=1.0, wu=1.0)
     
     for i in range(500):   
         
@@ -32,7 +32,12 @@ def main():
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
         env.draw_trajectory(info['ref_traj_list'], 'y', refresh=True)
 
-        env.step(opt_vel, stop=False)
+        vx = opt_vel[0, 0] * cos(opt_vel[1, 0])
+        vy = opt_vel[0, 0] * sin(opt_vel[1, 0])
+        omni_vel = np.array([[vx], [vy]])
+
+        env.step(omni_vel, stop=False)
+        # env.step(opt_vel, stop=False)
     
         env.render(show_traj=True, show_trail=True)
 
