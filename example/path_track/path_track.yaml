@@ -31,7 +31,7 @@ obstacle:
   - number: 1
     distribution: {name: 'manual'}
     shape:
-      - {name: 'polygon', vertices: [[31, 24], [33, 24], [33, 28], [31, 28]]}
+      - {name: 'polygon', vertices: [[31, 28], [33, 28], [33, 24], [31, 24]]}
     state: 
       - [0, 0, 0] 
 
