@@ -414,6 +414,12 @@ class MPC:
 
     def gen_inequal_global(self, vertex):
 
+        convex_flag, order = self.is_convex_and_ordered(vertex)
+
+        assert convex_flag, 'The polygon constructed by vertex is not convex. Please check the vertex.'
+
+        if order == 'CW': vertex = vertex[:, ::-1]
+            
         temp_vertex = np.c_[vertex, vertex[0:2, 0]]   
 
         point_num = vertex.shape[1]
@@ -437,5 +443,44 @@ class MPC:
 
         return A, b 
 
+
+    def cross_product(self, o, a, b):
+        """Compute the cross product of vectors OA and OB.
+        A positive cross product indicates a counter-clockwise turn,
+        a negative indicates a clockwise turn, and zero indicates a collinear point."""
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    def is_convex_and_ordered(self, points):
+        """Determine if the polygon is convex and return the order (CW or CCW).
+        
+        Args:
+            points (np.ndarray): A 2xN NumPy array representing the vertices of the polygon.
+            
+        Returns:
+            (bool, str): A tuple where the first element is True if the polygon is convex,
+                        and the second element is 'CW' or 'CCW' based on the order.
+                        If not convex, returns (False, None).
+        """
+        n = points.shape[1]  # Number of points
+        if n < 3:
+            return False, None  # A polygon must have at least 3 points
+
+        # Initialize the direction for the first cross product
+        direction = 0
+        
+        for i in range(n):
+            o = points[:, i]
+            a = points[:, (i + 1) % n]
+            b = points[:, (i + 2) % n]
+            
+            cross = self.cross_product(o, a, b)
+            
+            if cross != 0:  # Only consider non-collinear points
+                if direction == 0:
+                    direction = 1 if cross > 0 else -1
+                elif (cross > 0 and direction < 0) or (cross < 0 and direction > 0):
+                    return False, None  # Not convex
+
+        return True, 'CCW' if direction > 0 else 'CW'
 
 
