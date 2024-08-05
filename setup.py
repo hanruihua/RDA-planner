@@ -17,6 +17,6 @@ setup(
         'scikit-learn',
         'scikit-image',
     ],
-    description="The source code of optimization based RDA motion planner",
+    description="The source code of the accelerated optimization based RDA motion planner",
     author="Han Ruihua"
 )
