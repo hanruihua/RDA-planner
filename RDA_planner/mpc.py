@@ -14,13 +14,17 @@ from collections import namedtuple
 rdaobs = namedtuple('rdaobs', 'A b cone_type center vertex')
 
 class MPC:
-    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, max_edge_num=5, max_obs_num=5, process_num=4, **kwargs) -> None:
+    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, max_edge_num=5, max_obs_num=5, process_num=4, accelerated=True, **kwargs) -> None:
 
         '''
         Agruments 
             () -- default value; * -- recommended to tune to improve the performance.
 
-            car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker or diff
+            car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker, diff, or omni
+                dynamics: 'acker', velocity: linear speed and steering angle. 
+                dynamics: 'diff', velocity: linear speed and angular speed.  
+                dynamics: 'omni', velocity: linear speed and velocity angle.  
+                    
             ref_path: a list of reference points, each point is a 3*1 vector (x, y, theta). if enable_reverse is True, the reference path should be splitted by the gear change.
             *receding (10): The receding horizon for mpc.
             sample_time (0.1): the step time of the world.
@@ -33,6 +37,7 @@ class MPC:
             max_edge_num (5): The maximum number of edges for the polygon obstacle considered in the rda_solver. 
             max_obs_num (5): The maximum number of obstacles considered in the rda_solver.
             process_num (4): The number of processes to solve the rda problem. Depends on your computer
+            accelerated: if True, accelerated ADMM is used in the rda_solver.  True by default, if False, please reduce the ro1 and add the iter_num to make the solver converge.
 
             kwargs:
                 *slack_gain (8): slack gain value for l1 regularization, see paper for details.
@@ -61,7 +66,7 @@ class MPC:
         self.cur_index = 0
         self.ref_path = ref_path
         
-        self.rda = RDA_solver(receding, car_tuple, max_edge_num, max_obs_num, iter_num=iter_num, step_time=sample_time, process_num=process_num, **kwargs)
+        self.rda = RDA_solver(receding, car_tuple, max_edge_num, max_obs_num, iter_num=iter_num, step_time=sample_time, process_num=process_num, accelerated=accelerated, **kwargs)
 
         self.enable_reverse = enable_reverse
 
@@ -210,6 +215,9 @@ class MPC:
                 cur_state = self.motion_predict_model_acker(cur_state, self.cur_vel_array[:, i:i+1], self.L, self.dt)
             elif self.dynamics == 'diff':
                 cur_state = self.motion_predict_model_diff(cur_state, self.cur_vel_array[:, i:i+1], self.dt)
+            
+            elif self.dynamics == 'omni':
+                cur_state = self.motion_predict_model_omni(cur_state, self.cur_vel_array[:, i:i+1], self.dt)
 
             state_pre_list.append(cur_state)
 
@@ -252,6 +260,21 @@ class MPC:
         next_state = robot_state + ds * sample_time
 
         # next_state[2, 0] = wraptopi(next_state[2, 0])
+
+        return next_state
+    
+    def motion_predict_model_omni(self, robot_state, vel, sample_time):
+
+        assert robot_state.shape[0] >= 2 and vel.shape == (2, 1) 
+
+        vx = vel[0, 0] * cos(vel[1, 0])
+        vy = vel[0, 0] * sin(vel[1, 0])
+        omni_vel = np.array([[vx], [vy], [0]])
+
+        next_state = robot_state + sample_time * omni_vel
+
+        # ds = np.row_stack((vel, [0]))
+        # next_state = robot_state + sample_time * ds
 
         return next_state
 
@@ -391,6 +414,12 @@ class MPC:
 
     def gen_inequal_global(self, vertex):
 
+        convex_flag, order = self.is_convex_and_ordered(vertex)
+
+        assert convex_flag, 'The polygon constructed by vertex is not convex. Please check the vertex.'
+
+        if order == 'CW': vertex = vertex[:, ::-1]
+            
         temp_vertex = np.c_[vertex, vertex[0:2, 0]]   
 
         point_num = vertex.shape[1]
@@ -414,5 +443,44 @@ class MPC:
 
         return A, b 
 
+
+    def cross_product(self, o, a, b):
+        """Compute the cross product of vectors OA and OB.
+        A positive cross product indicates a counter-clockwise turn,
+        a negative indicates a clockwise turn, and zero indicates a collinear point."""
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    def is_convex_and_ordered(self, points):
+        """Determine if the polygon is convex and return the order (CW or CCW).
+        
+        Args:
+            points (np.ndarray): A 2xN NumPy array representing the vertices of the polygon.
+            
+        Returns:
+            (bool, str): A tuple where the first element is True if the polygon is convex,
+                        and the second element is 'CW' or 'CCW' based on the order.
+                        If not convex, returns (False, None).
+        """
+        n = points.shape[1]  # Number of points
+        if n < 3:
+            return False, None  # A polygon must have at least 3 points
+
+        # Initialize the direction for the first cross product
+        direction = 0
+        
+        for i in range(n):
+            o = points[:, i]
+            a = points[:, (i + 1) % n]
+            b = points[:, (i + 2) % n]
+            
+            cross = self.cross_product(o, a, b)
+            
+            if cross != 0:  # Only consider non-collinear points
+                if direction == 0:
+                    direction = 1 if cross > 0 else -1
+                elif (cross > 0 and direction < 0) or (cross < 0 and direction > 0):
+                    return False, None  # Not convex
+
+        return True, 'CCW' if direction > 0 else 'CW'
 
 

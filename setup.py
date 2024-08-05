@@ -4,12 +4,12 @@ import sys
 setup(
     name='RDA_planner',
     py_modules=['RDA_planner'],
-    version= '1.3',
+    version= '2.2',
     install_requires=[
         'cvxpy==1.5.2',
         'numpy',
         'pathos',
-        'ir_sim==2.1.1',
+        'ir_sim==2.1.2',
         'matplotlib',
         'gctl==1.1',
         'opencv-python',

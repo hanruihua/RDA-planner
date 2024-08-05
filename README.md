@@ -22,6 +22,7 @@ Features:
   - Highly accurate control achieved through the use of an optimization solver. 
   - Support for both static and dynamic obstacles
   - Fast computation time, which is suitable for real-time applications.
+  - Support different types of dynamics, including differential, Ackermann, and omnidirectional robots.
 
 
 ## Prerequisite
@@ -47,7 +48,7 @@ pip install -e .
 **Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="example\dynamic_obs\animation\dynamic_obs1.gif" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
 |:-------------------------:|:-------------------------:|:-------------------------:|
 
-**Note:** You can customize the scenario by modifying the parameters in the corresponding yaml file as introduced in [ir_sim](https://github.com/hanruihua/ir_sim). For the polygon obstacles, please make sure the order of the vertices is Counterclockwise.
+**Note:** You can customize the scenario by modifying the parameters in the corresponding yaml file as introduced in [ir_sim](https://github.com/hanruihua/ir_sim). For the polygon obstacles, please make sure the obstacles are convex (CCW order is not necessary now).
 
 
 ## Citation
