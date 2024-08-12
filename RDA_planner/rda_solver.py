@@ -690,8 +690,8 @@ class RDA_solver:
         return resi_pri
     
     def su_prob_solve(self):
-        # self.prob_su.solve(solver=cp.ECOS, verbose=False)
-        self.prob_su.solve(solver=cp.SCS, verbose=False)
+        self.prob_su.solve(solver=cp.ECOS, verbose=False)
+        # self.prob_su.solve(solver=cp.SCS, verbose=False)
 
         if self.prob_su.status == cp.OPTIMAL or self.prob_su.status == cp.OPTIMAL_INACCURATE:
             return self.indep_s.value, self.indep_u.value, self.indep_dis.value
