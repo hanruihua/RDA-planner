@@ -19,7 +19,7 @@ class RDA_solver:
                        car_tuple, 
                        max_edge_num=5, 
                        max_obs_num=5,
-                       iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, accelerated=True, **kwargs) -> None:
+                       iter_num=2, step_time=0.1, iter_threshold=0.2, process_num=4, accelerated=True, time_print=True, **kwargs) -> None:
 
         '''
             kwargs:
@@ -57,6 +57,8 @@ class RDA_solver:
         elif process_num > 1:
             global pool 
             pool = self.construct_mp_problem(process_num, **kwargs)
+        
+        self.time_print = time_print
     
     # region: definition of variables and parameters
     def definition(self, **kwargs):
@@ -110,7 +112,7 @@ class RDA_solver:
     def state_parameter_define(self):
         
         self.para_ref_s = cp.Parameter((3, self.T+1), name='para_ref_state')
-        self.para_ref_speed = cp.Parameter(name='para_ref_state')
+        self.para_ref_speed = cp.Parameter(name='para_ref_speed')
 
         self.para_s = cp.Parameter((3, self.T+1), name='para_state')
         self.para_u = cp.Parameter((2, self.T), name='para_vel')
@@ -213,13 +215,13 @@ class RDA_solver:
     
     def construct_su_prob(self, **kwargs):
         
-        ws = kwargs.get('ws', 1)
-        wu = kwargs.get('wu', 1)
+        self.ws = kwargs.get('ws', 1)
+        self.wu = kwargs.get('wu', 1)
 
         # ro1 = kwargs.get('ro1', 200)
         # ro2 = kwargs.get('ro2', 1)
         
-        nav_cost, nav_constraints = self.nav_cost_cons(ws, wu)
+        nav_cost, nav_constraints = self.nav_cost_cons(self.ws, self.wu)
         su_cost, su_constraints = self.update_su_cost_cons(self.para_slack_gain, self.ro1, self.ro2)
 
         prob_su = cp.Problem(cp.Minimize(nav_cost+su_cost), su_constraints+nav_constraints) 
@@ -587,15 +589,16 @@ class RDA_solver:
 
             start_time = time.time()
             opt_state_array, opt_velocity_array, resi_dual, resi_pri = self.rda_solver()
-            print('iteration ' + str(i) + ' time: ', time.time()-start_time)
+            if self.time_print: print('iteration ' + str(i) + ' time: ', time.time()-start_time)
             
             if resi_dual < self.iter_threshold and resi_pri < self.iter_threshold:
-                print('iteration early stop: '+ str(i))
+                if self.time_print: print('iteration early stop: '+ str(i))
                 break
-
-        print('-----------------------------------------------')
-        print('iteration time:', time.time() - iteration_time)
-        print('==============================================')
+        
+        if self.time_print:
+            print('-----------------------------------------------')
+            print('iteration time:', time.time() - iteration_time)
+            print('==============================================')
         
         # info for debug
         opt_state_list = [state[:, np.newaxis] for state in opt_state_array.T ]
@@ -1037,6 +1040,23 @@ class RDA_solver:
         return cp.constraints.nonpos.NonPos( proxy_array)
 
     # endregion
+
+
+    def get_adjust_parameter(self):
+        return {'slack_gain': self.para_slack_gain.value, 'max_sd': self.para_max_sd.value, 'min_sd': self.para_min_sd.value, 'ro1': self.ro1.value, 'ro2': self.ro2.value, 'ws': self.ws, 'wu': self.wu}
+
+
+
+    def reset(self):
+        
+        for n in range(self.max_obs_num):
+            for t in range(self.T):
+                self.para_obsA_rot_list[n][t+1].value = np.zeros((self.max_edge_num, 2))  
+                self.para_obsA_trans_list[n][t+1].value = np.zeros((self.max_edge_num, 1)) 
+
+                self.para_obsA_lam_list[n].value[t+1, :] = 0
+                self.para_obsb_lam_list[n].value[t+1, :] = 0
+       
     
 
 

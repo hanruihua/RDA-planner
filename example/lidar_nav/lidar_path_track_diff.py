@@ -71,7 +71,6 @@ def main():
     
     for i in range(500):   
         
-        obs_list_ref = env.get_obstacle_list()
         scan_data = env.get_lidar_scan()
         # obs_list : obstacle: (center, radius, vertex, cone_type, velocity)
         obs_list = scan_box(env.robot.state, scan_data)
@@ -82,7 +81,7 @@ def main():
         opt_vel, info = mpc_opt.control(env.robot.state, 4, obs_list)
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
-        env.step(opt_vel, stop=False)
+        env.step(opt_vel)
         env.render(show_traj=True, show_trail=True)
 
         if env.done():

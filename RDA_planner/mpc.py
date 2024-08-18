@@ -14,10 +14,10 @@ from collections import namedtuple
 rdaobs = namedtuple('rdaobs', 'A b cone_type center vertex')
 
 class MPC:
-    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, max_edge_num=5, max_obs_num=5, process_num=4, accelerated=True, **kwargs) -> None:
+    def __init__(self, car_tuple, ref_path, receding=10, sample_time=0.1, iter_num=4, enable_reverse=False, rda_obstacle=False, obstacle_order=False, max_edge_num=5, max_obs_num=5, process_num=4, accelerated=True, time_print=False, **kwargs) -> None:
 
         '''
-        Agruments 
+        Arguments 
             () -- default value; * -- recommended to tune to improve the performance.
 
             car_tuple: 'G h cone_type wheelbase max_speed max_acce dynamics',  dynamics: acker, diff, or omni
@@ -66,7 +66,7 @@ class MPC:
         self.cur_index = 0
         self.ref_path = ref_path
         
-        self.rda = RDA_solver(receding, car_tuple, max_edge_num, max_obs_num, iter_num=iter_num, step_time=sample_time, process_num=process_num, accelerated=accelerated, **kwargs)
+        self.rda = RDA_solver(receding, car_tuple, max_edge_num, max_obs_num, iter_num=iter_num, step_time=sample_time, process_num=process_num, accelerated=accelerated, time_print=time_print, **kwargs)
 
         self.enable_reverse = enable_reverse
 
@@ -416,7 +416,9 @@ class MPC:
 
         convex_flag, order = self.is_convex_and_ordered(vertex)
 
-        assert convex_flag, 'The polygon constructed by vertex is not convex. Please check the vertex.'
+        # assert convex_flag, f'The polygon constructed by vertex is not convex. Please check the vertex: {vertex}'
+        if not convex_flag:
+            print(f'Warning: The polygon constructed by vertex is not convex. Please check the vertex: {vertex}')
 
         if order == 'CW': vertex = vertex[:, ::-1]
             
@@ -482,5 +484,24 @@ class MPC:
                     return False, None  # Not convex
 
         return True, 'CCW' if direction > 0 else 'CW'
+    
+
+    def get_adjust_parameters(self):
+
+        '''
+        get the adjust parameter of the rda_solver: ws, wu, ro1, ro2, iter_threshold, slack_gain, max_sd, min_sd
+        
+        '''
+
+        return self.rda.get_adjust_parameter()
+
+
+
+    def reset(self):
+        self.cur_vel_array = np.zeros((2, self.receding))
+        self.cur_index = 0
+        self.curve_index = 0
+
+        self.rda.reset()
 
 
