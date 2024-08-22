@@ -31,7 +31,7 @@ def main():
 
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
-        env.step(opt_vel, stop=False)
+        env.step(opt_vel)
         env.render(show_traj=True, show_trail=True)
 
         if env.done():
