@@ -763,9 +763,12 @@ class RDA_solver:
             para_obstacle_list[obs_index]['A'][t+1].value = nom_obs_A[t+1]
             para_obstacle_list[obs_index]['b'][t+1].value = nom_obs_b[t+1]
             para_obstacle_list[obs_index]['cone_type'].value = nom_cone
-
-        prob.solve(solver=cp.ECOS)
-        # prob.solve(solver=cp.SCS)
+        
+        try:
+            prob.solve(solver=cp.ECOS)
+        except Exception as e:
+            print('solve parallel error:', e, 'try another solver SCS')
+            prob.solve(solver=cp.SCS)
 
         for variable in prob.variables():
             if 'lam_' in variable.name():
@@ -792,7 +795,14 @@ class RDA_solver:
     def solve_direct(self, input):
         
         prob, obs_index = input
-        prob.solve(solver=cp.ECOS)
+
+        try:
+            prob.solve(solver=cp.ECOS)
+        except Exception as e:
+            print('solve parallel error:', e, 'try another solver SCS')
+            prob.solve(solver=cp.SCS)
+
+        # prob.solve(solver=cp.ECOS)
         # prob.solve(solver=cp.SCS)
 
         indep_lam = self.indep_lam_list[obs_index]
