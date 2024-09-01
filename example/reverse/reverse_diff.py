@@ -1,4 +1,4 @@
-from ir_sim.env import EnvBase
+from irsim.env import EnvBase
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
-        env.step(opt_vel, stop=False)
+        env.step(opt_vel)
         env.render(0.01, show_traj=True, show_trail=True)
         # env.render(0.1, show_traj=True)
          

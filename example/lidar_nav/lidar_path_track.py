@@ -1,4 +1,4 @@
-from ir_sim.env import EnvBase
+from irsim.env import EnvBase
 import sys
 import numpy as np
 from RDA_planner.mpc import MPC
@@ -82,7 +82,7 @@ def main():
         opt_vel, info = mpc_opt.control(env.robot.state, 4, obs_list)
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
-        env.step(opt_vel, stop=False)
+        env.step(opt_vel)
         env.render(show_traj=True, show_trail=True)
 
         if env.done():

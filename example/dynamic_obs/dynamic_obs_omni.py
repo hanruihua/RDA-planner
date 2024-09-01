@@ -2,7 +2,7 @@ import sys
 import time
 from collections import namedtuple
 import numpy as np
-from ir_sim.env import EnvBase
+from irsim.env import EnvBase
 from RDA_planner.mpc import MPC
 from math import cos, sin
 

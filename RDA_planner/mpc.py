@@ -270,9 +270,9 @@ class MPC:
         vx = vel[0, 0] * cos(vel[1, 0])
         vy = vel[0, 0] * sin(vel[1, 0])
         omni_vel = np.array([[vx], [vy], [0]])
+        # omni_vel = np.array([[vx], [vy]])
 
         next_state = robot_state + sample_time * omni_vel
-
         # ds = np.row_stack((vel, [0]))
         # next_state = robot_state + sample_time * ds
 

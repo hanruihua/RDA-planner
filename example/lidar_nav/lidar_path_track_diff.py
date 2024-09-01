@@ -1,4 +1,4 @@
-from ir_sim.env import EnvBase
+from irsim.env import EnvBase
 import sys
 import numpy as np
 from RDA_planner.mpc import MPC

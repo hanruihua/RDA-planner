@@ -10,6 +10,7 @@ world:
 
 robot:
   - kinematics: {name: 'omni'} 
+    state_dim: 3
     shape: {name: 'rectangle', length: 3.0, width: 1.6, wheelbase: 0}
     state: [10, 40, 1.57] 
     goal: [40, 40, 0] 
