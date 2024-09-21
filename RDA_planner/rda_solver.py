@@ -1,7 +1,7 @@
 
 '''
 RDA solver 
-Author: Han Ruihua
+Author: Han Ruihua (hanrh@connect.hku.hk)
 '''
 
 import cvxpy as cp
