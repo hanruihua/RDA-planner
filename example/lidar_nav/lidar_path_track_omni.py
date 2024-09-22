@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 from irsim.env import EnvBase
-=======
-from ir_sim.env import EnvBase
->>>>>>> add omni dynamics
 import sys
 import numpy as np
 from RDA_planner.mpc import MPC
@@ -91,7 +87,7 @@ def main():
         vy = opt_vel[0, 0] * sin(opt_vel[1, 0])
         omni_vel = np.array([[vx], [vy]])
 
-        env.step(omni_vel, stop=False)
+        env.step(omni_vel)
         env.render(show_traj=True, show_trail=True)
 
         if env.done():

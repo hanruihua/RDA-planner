@@ -32,7 +32,7 @@ def main():
         vy = opt_vel[0, 0] * sin(opt_vel[1, 0])
         omni_vel = np.array([[vx], [vy]])
 
-        env.step(omni_vel, stop=False)
+        env.step(omni_vel)
         env.render(show_traj=True)
 
         if env.done():
