@@ -218,6 +218,7 @@ class MPC:
         return distance
 
     def update_ref_path(self, ref_path):
+        
         self.ref_path = ref_path
         self.cur_index = 0
 
