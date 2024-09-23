@@ -38,13 +38,9 @@ pip install -e .
 
 ## Run examples
 
-Our examples are based on the [ir-sim](https://github.com/hanruihua/ir-sim), you should install the ir-sim package 
+To run the examples based on ir-sim, you should install the specific version of the ir-sim package using:
 ```
 pip install ir_sim==2.2.4
-```
-before running the examples.
-
-
 ```
 
 **Path Track (example/path_track.py)**                 |  <img src="https://github.com/user-attachments/assets/6a1304e0-85cd-4bb8-a281-86c1cefe3adc" width="400" /> 
