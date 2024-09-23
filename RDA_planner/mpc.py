@@ -450,9 +450,9 @@ class MPC:
             A = []
             b = []
             for t in range(self.receding + 1):
-                next = center + velocity * (t * self.dt)
+                next_center = center + velocity * (t * self.dt)
                 temp_A = np.array([[1, 0], [0, 1], [0, 0]])
-                temp_b = np.row_stack((next, -radius * np.ones((1, 1))))
+                temp_b = np.row_stack((next_center, -radius * np.ones((1, 1))))
 
                 A.append(temp_A)
                 b.append(temp_b)
@@ -468,8 +468,8 @@ class MPC:
             A, b = [], []
 
             for t in range(self.receding + 1):
-                next = vertex + velocity * (t * self.dt)
-                temp_A, temp_b = self.gen_inequal_global(next)
+                next_vertex = vertex + velocity * (t * self.dt)
+                temp_A, temp_b = self.gen_inequal_global(next_vertex)
                 A.append(temp_A)
                 b.append(temp_b)
 
