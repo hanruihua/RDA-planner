@@ -45,7 +45,7 @@ pip install -e .
 **Input Lidar points (example/lidar_path_track.py)** | <img src="example\lidar_nav\animation\path_track.gif" width="400" />
 
 
-**Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="https://connecthkuhk-my.sharepoint.com/:i:/g/personal/hanrh_connect_hku_hk/EesCoWez5jxAhOpRDFYTMv0BIRs0GUASdFlrYj_tTD7LiQ?e=ng4Q4n" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
+**Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="https://gifyu.com/image/SAn0e" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
 |:-------------------------:|:-------------------------:|:-------------------------:|
 
 
