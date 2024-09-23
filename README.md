@@ -38,7 +38,7 @@ pip install -e .
 
 ## Run examples
 
-**Path Track (example/path_track.py)**                 |  <img src="example\path_track\animation\path_track.gif" width="400" />  
+**Path Track (example/path_track.py)**                 |  <img src="https://github.com/user-attachments/assets/6a1304e0-85cd-4bb8-a281-86c1cefe3adc" width="400" />  
 |:-------------------------:|:-------------------------:|
 **Cross Corridor (example/corridor.py)** | <img src="https://github.com/user-attachments/assets/6965bef3-f79d-4732-8103-6b92b92ce37a" width="500" />|
 **Reverse Parking (example/reverse.py)** | <img src="example\reverse\animation\reverse_park.gif" width="400" />
