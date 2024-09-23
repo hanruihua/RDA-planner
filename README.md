@@ -38,15 +38,17 @@ pip install -e .
 
 ## Run examples
 
-**Path Track (example/path_track.py)**                 |  <img src="example\path_track\animation\path_track.gif" width="400" />  
+To run the examples based on ir-sim, you should install the specific version of the ir-sim package using:
+```
+pip install ir-sim==2.2.4
+```
+
+**Path Track (example/path_track.py)**                 |  <img src="https://github.com/user-attachments/assets/6a1304e0-85cd-4bb8-a281-86c1cefe3adc" width="400" /> 
 |:-------------------------:|:-------------------------:|
-**Cross Corridor (example/corridor.py)** | <img src="example\corridor\animation\corridor.gif" width="500" />|
-**Reverse Parking (example/reverse.py)** | <img src="example\reverse\animation\reverse_park.gif" width="400" />
+**Cross Corridor (example/corridor.py)** | <img src="https://github.com/user-attachments/assets/6965bef3-f79d-4732-8103-6b92b92ce37a" width="500" />
+**Reverse Parking (example/reverse.py)** | <img src="https://github.com/user-attachments/assets/dcfe8603-3a4d-433f-a66a-5eee86ccc3ec" width="400" />
 **Input Lidar points (example/lidar_path_track.py)** | <img src="example\lidar_nav\animation\path_track.gif" width="400" />
-
-
-**Dynamic obstacles avoidance (example/dynamic_obs.py)** | <img src="example\dynamic_obs\animation\dynamic_obs1.gif" width="300" /> |  <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
-|:-------------------------:|:-------------------------:|:-------------------------:|
+**Dynamic obstacles avoidance (example/dynamic_obs.py)**| <img src="example\dynamic_obs\animation\dynamic_obs2.gif" width="300" />
 
 **Note:** You can customize the scenario by modifying the parameters in the corresponding yaml file as introduced in [ir-sim](https://github.com/hanruihua/ir-sim). For the polygon obstacles, please make sure the obstacles are convex (CCW order is not necessary now).
 
