@@ -47,11 +47,10 @@ pip install ir-sim==2.2.4
 |:-------------------------:|:-------------------------:|
 **Cross Corridor (example/corridor.py)** | <img src="https://github.com/user-attachments/assets/6965bef3-f79d-4732-8103-6b92b92ce37a" width="500" />
 **Reverse Parking (example/reverse.py)** | <img src="https://github.com/user-attachments/assets/dcfe8603-3a4d-433f-a66a-5eee86ccc3ec" width="400" />
-**Input Lidar points (example/lidar_path_track.py)** | <img src="example\lidar_nav\animation\path_track.gif" width="400" />
+**Input Lidar points (example/lidar_path_track.py)** | <img src="https://github.com/user-attachments/assets/22d69e89-f40f-42cc-ae34-8fc68ecd8111" width="400" />
 **Dynamic obstacles avoidance (example/dynamic_obs.py)**| <img src="https://github.com/user-attachments/assets/a899d9ef-c36a-43e2-bfc9-303243eb589a" width="400" />
 
 **Note:** You can customize the scenario by modifying the parameters in the corresponding yaml file as introduced in [ir-sim](https://github.com/hanruihua/ir-sim). For the polygon obstacles, please make sure the obstacles are convex (CCW order is not necessary now).
-
 
 ## Citation
 
