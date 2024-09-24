@@ -38,7 +38,7 @@ pip install -e .
 
 ## Run examples
 
-To run the examples based on ir-sim, you should install the specific version of the ir-sim package using:
+To run the examples based on [ir-sim](https://github.com/hanruihua/ir-sim), you should install the specific version of the ir-sim package using:
 ```
 pip install ir-sim==2.2.4
 ```
