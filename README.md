@@ -24,6 +24,7 @@ Features:
   - Fast computation time, which is suitable for real-time applications.
   - Support different types of dynamics, including differential, Ackermann, and omnidirectional robots.
 
+The ROS wrapper of RDA planner is available at [rda_ros](https://github.com/hanruihua/rda_ros)
 
 ## Prerequisite
 - Python >= 3.8
