@@ -10,7 +10,7 @@
 <a href="https://www.bilibili.com/video/BV1zT411d7aL/?vd_source=cf6ba629063343717a192a5be9fe8985"><img src='https://img.shields.io/badge/Video-Bilibili-blue' alt='bilibili'></a>
 <a href="#citation"><img src='https://img.shields.io/badge/BibTex-RDA_planner-lightgreen' alt='Paper BibTex'></a>
 <a href="https://github.com/hanruihua/RDA_planner/blob/main/LICENSE"><img src='https://img.shields.io/badge/License-MIT-yellow' alt='Paper BibTex'></a>
-
+<a href="https://github.com/hanruihua/rda_ros"><img src='https://img.shields.io/badge/Wrapper-ROS-red' alt='ROS'></a>
 
 
 </div>
