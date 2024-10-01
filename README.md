@@ -24,6 +24,8 @@ Features:
   - Fast computation time, which is suitable for real-time applications.
   - Support different types of dynamics, including differential, Ackermann, and omnidirectional robots.
 
+## News
+
 **25 September 2024:** The ROS wrapper of RDA planner is available at [rda_ros](https://github.com/hanruihua/rda_ros)
 
 ## Prerequisite
