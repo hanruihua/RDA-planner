@@ -15,14 +15,15 @@
 
 </div>
 
-RDA planner is a fast and efficient motion planner for autonomous navigation in cluttered environments. The key idea of RDA is to decompose the complex optimization problem into several subproblems by ADMM, which allows the collision avoidance constraints to be computed in parallel for each obstacle to reduce computation time significantly. 
+RDA Planner is a high-performance, optimization-based, Model Predictive Control (MPC) motion planner designed for autonomous navigation in complex and cluttered environments. Utilizing the Alternating Direction Method of Multipliers (ADMM), RDA decomposes complex optimization problems into several simple subproblems. This decomposition enables parallel computation of collision avoidance constraints for each obstacle, significantly enhancing computation speed.
 
-Features:
-  - Shape aware planner, which can tackle robots and obstacles with arbitrary convex shapes.
-  - Highly accurate control achieved through the use of an optimization solver. 
-  - Support for both static and dynamic obstacles
-  - Fast computation time, which is suitable for real-time applications.
-  - Support different types of dynamics, including differential, Ackermann, and omnidirectional robots.
+**Key Features:**
+
+- **Shape-Aware Planning:** Handles robots and obstacles with arbitrary convex shapes, ensuring versatility across diverse scenarios.
+- **High-Precision Control:** Achieves accurate control trajectories through advanced optimization solvers, enhancing navigation reliability.
+- **Dynamic Obstacle Handling:** Supports both static and dynamic obstacles, enabling robust performance in ever-changing environments.
+- **Real-Time Performance:** Offers fast computation times suitable for real-time applications, ensuring timely decision-making and responsiveness.
+- **Versatile Kinematic Support:** Compatible with various types of robot kinematics, including differential drive, Ackermann steering, and omnidirectional systems, providing flexibility for different robotic platforms.
 
 ## News
 
