@@ -60,7 +60,7 @@ pip install ir-sim==2.2.4
 **Note:** You can customize the scenario by modifying the parameters in the corresponding yaml file as introduced in [ir-sim](https://github.com/hanruihua/ir-sim). For the polygon obstacles, please make sure the obstacles are convex (CCW order is not necessary now).
 
 
-### Demonstrations in dynamic collision avoidance and autonomous driving
+### Demonstrations of dynamic collision avoidance and autonomous driving
 
 Please see [rda_ros](https://github.com/hanruihua/rda_ros) for detail
 
