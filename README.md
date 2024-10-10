@@ -42,7 +42,10 @@ pip install -e .
 
 ## Run examples
 
-To run the examples based on [ir-sim](https://github.com/hanruihua/ir-sim), you should install this package using:
+### Demnonstrations in [ir-sim](https://github.com/hanruihua/ir-sim) 
+
+you should install ir-sim by:
+
 ```
 pip install ir-sim==2.2.4
 ```
@@ -55,6 +58,13 @@ pip install ir-sim==2.2.4
 **Dynamic obstacles avoidance (example/dynamic_obs.py)**| <img src="https://github.com/user-attachments/assets/a899d9ef-c36a-43e2-bfc9-303243eb589a" width="400" />
 
 **Note:** You can customize the scenario by modifying the parameters in the corresponding yaml file as introduced in [ir-sim](https://github.com/hanruihua/ir-sim). For the polygon obstacles, please make sure the obstacles are convex (CCW order is not necessary now).
+
+
+### Demonstrations in dynamic collision avoidance and autonomous driving
+
+Please see [rda_ros](https://github.com/hanruihua/rda_ros) for detail
+
+https://github.com/user-attachments/assets/94c40338-9e77-43c4-ad01-59b303f188c1
 
 ## Citation
 
