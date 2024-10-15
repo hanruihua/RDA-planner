@@ -42,7 +42,7 @@ pip install -e .
 
 ## Run examples
 
-### Demnonstrations in [ir-sim](https://github.com/hanruihua/ir-sim) 
+### Demonstrations in [ir-sim](https://github.com/hanruihua/ir-sim) 
 
 you should install ir-sim by:
 
