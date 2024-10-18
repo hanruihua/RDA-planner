@@ -47,7 +47,7 @@ pip install -e .
 you should install ir-sim by:
 
 ```
-pip install ir-sim==2.2.4
+pip install ir-sim==2.2.5
 ```
 
 **Path Track (example/path_track.py)**                 |  <img src="https://github.com/user-attachments/assets/6a1304e0-85cd-4bb8-a281-86c1cefe3adc" width="400" /> 
