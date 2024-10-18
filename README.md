@@ -44,7 +44,7 @@ pip install -e .
 
 ### Demonstrations in [ir-sim](https://github.com/hanruihua/ir-sim) 
 
-you should install ir-sim by:
+Please install ir-sim by:
 
 ```
 pip install ir-sim==2.2.5
