@@ -66,6 +66,13 @@ Please see [rda_ros](https://github.com/hanruihua/rda_ros) for detail
 
 https://github.com/user-attachments/assets/94c40338-9e77-43c4-ad01-59b303f188c1
 
+## Acknowledgement
+
+We thank the authors of the following repositories for their excellent work, which has inspired us to develop RDA planner:
+
+- [OBCA](https://github.com/XiaojingGeorgeZhang/OBCA)
+- [H-OBCA](https://github.com/XiaojingGeorgeZhang/H-OBCA)
+
 ## Citation
 
 If you find this code or paper is helpful, you can **star** this repository and cite our paper by the following **BibTeX** entry:
