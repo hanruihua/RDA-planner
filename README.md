@@ -68,10 +68,11 @@ https://github.com/user-attachments/assets/94c40338-9e77-43c4-ad01-59b303f188c1
 
 ## Acknowledgement
 
-We thank the authors of the following repositories for their excellent work, which has inspired us to develop RDA planner:
+We thank the authors of the following excellent work, which has inspired us to develop RDA planner:
 
-- [OBCA](https://github.com/XiaojingGeorgeZhang/OBCA)
-- [H-OBCA](https://github.com/XiaojingGeorgeZhang/H-OBCA)
+```
+Zhang, X., Liniger, A., & Borrelli, F. (2020). Optimization-based collision avoidance. IEEE Transactions on Control Systems Technology, 29(3), 972-983.
+```
 
 ## Citation
 
