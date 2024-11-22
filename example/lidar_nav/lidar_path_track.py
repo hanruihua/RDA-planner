@@ -1,4 +1,4 @@
-from irsim.env import EnvBase
+import irsim
 import sys
 import numpy as np
 from RDA_planner.mpc import MPC
@@ -7,7 +7,7 @@ import cv2
 from sklearn.cluster import DBSCAN
 
 # environment
-env = EnvBase('lidar_path_track.yaml', save_ani=False, display=True, full=False)
+env = irsim.make(save_ani=False, display=True, full=False)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')
 obs = namedtuple('obstacle', 'center radius vertex cone_type velocity')
 

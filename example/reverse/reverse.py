@@ -1,10 +1,10 @@
-from irsim.env import EnvBase
+import irsim
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
 from gctl.curve_generator import curve_generator
 
-env = EnvBase('reverse.yaml', save_ani=False, display=True, full=False)
+env = irsim.make(save_ani=False, display=True, full=False)
 
 # start and goal point of the robot
 point1 = np.array([ [5], [40], [0]])

@@ -2,11 +2,11 @@ import sys
 import time
 from collections import namedtuple
 import numpy as np
-from irsim.env import EnvBase
+import irsim
 from RDA_planner.mpc import MPC
 
 # environment
-env = EnvBase('dynamic_obs_diff.yaml', save_ani=False, display=True, full=False)
+env = irsim.make(save_ani=False, display=True, full=False)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')
 
 # saved ref path

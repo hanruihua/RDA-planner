@@ -1,4 +1,4 @@
-from irsim.env import EnvBase
+import irsim
 import sys
 import numpy as np
 from RDA_planner.mpc import MPC
@@ -7,7 +7,7 @@ import time
 from math import cos, sin
 
 # environment
-env = EnvBase('path_track_omni.yaml', save_ani=False, display=True, full=False)
+env = irsim.make(save_ani=False, display=True, full=False)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')
 
 # saved ref path

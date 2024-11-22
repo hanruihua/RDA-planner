@@ -32,7 +32,7 @@ obstacle:
       - {name: 'circle', radius: 0.5}  # radius
 
     behavior: 
-      - {name: 'wander', range_low: [10, 10, -3.14], range_high: [40, 40, 3.14]}
+      - {name: 'dash', range_low: [10, 10, -3.14], range_high: [40, 40, 3.14], wander: True}
 
     vel_min: [-1.0, -3.14]
     vel_max: [1.0, 3.14]
