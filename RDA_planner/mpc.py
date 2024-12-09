@@ -6,6 +6,7 @@ Author: Han Ruihua (hanrh@connect.hku.hk)
 import numpy as np
 from math import inf, sqrt, pi, sin, cos, tan
 from RDA_planner.rda_solver import RDA_solver
+from RDA_planner.opt_solver_lobca import opt_solver
 import yaml
 from collections import namedtuple
 
@@ -80,6 +81,7 @@ class MPC:
         accelerated: bool = True,
         time_print: bool = False,
         goal_index_threshold: int = 1,
+        lobca: bool = False,
         **kwargs,
     ) -> None:
 
@@ -112,6 +114,11 @@ class MPC:
             time_print=time_print,
             **kwargs,
         )
+
+        self.lobca = lobca
+
+        if self.lobca:
+            self.lobca_solver = opt_solver(receding=10, car_tuple=car_tuple, obstacle_list=[], iter_num=2, step_time=0.1, iter_threshold=0.1)
 
         self.enable_reverse = enable_reverse
 
@@ -162,6 +169,10 @@ class MPC:
             rda_obs_list,
             **kwargs,
         )
+
+        if self.lobca:
+            self.lobca_solver.update_obstecles(rda_obs_list)
+            u_opt_array, info = self.lobca_solver.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, ref_speed, 'lobca')
 
         if self.cur_index >= len(cur_ref_path) - self.goal_index_threshold:
 
