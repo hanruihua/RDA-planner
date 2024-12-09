@@ -236,17 +236,15 @@ class MPC:
         curve_list = []
 
         start_index = 0
-        end_index = -1
 
         for index, point in enumerate(ref_path):
             if point[-1, 0] != flag:
 
-                end_index = index
-                curve_list.append(ref_path[start_index:end_index])
-                start_index = end_index
+                curve_list.append(ref_path[start_index:index])
+                start_index = index
                 flag = point[-1, 0]
 
-        curve_list.append(ref_path[end_index:])
+        curve_list.append(ref_path[start_index:])
 
         return curve_list
 
