@@ -26,7 +26,7 @@ RDA Planner is a high-performance, optimization-based, Model Predictive Control 
 - **Versatile Kinematic Support:** Compatible with various types of robot kinematics, including differential drive, Ackermann steering, and omnidirectional systems, providing flexibility for different robotic platforms.
 
 ## News
-**10 December 2024:** We upload the code implementation of the linearized OBCA algorithm in the [dev_lobca] branch to facilitate the comparison with the RDA planner. Run [path_track_lobca.py](https://github.com/hanruihua/RDA-planner/blob/dev_lobca/example/path_track/path_track_lobca.py) to see the performance. (Note: The linearized OBCA algorithm is not integrated with the DPP framework, resulting in additional problem formulation time for each iteration. Concentrating on problem-solving time is more appropriate for comparison purposes.)
+**10 December 2024:** We have uploaded the code implementation of the linearized OBCA algorithm in the [dev_lobca] branch to facilitate the comparison with the RDA planner. Run [path_track_lobca.py](https://github.com/hanruihua/RDA-planner/blob/dev_lobca/example/path_track/path_track_lobca.py) to see the performance. (Note: The linearized OBCA algorithm is not integrated with the DPP framework, resulting in additional problem formulation time for each iteration. Concentrating on problem-solving time is more appropriate for comparison purposes.)
 
 **25 September 2024:** The ROS wrapper of RDA planner is available at [rda_ros](https://github.com/hanruihua/rda_ros)
 
