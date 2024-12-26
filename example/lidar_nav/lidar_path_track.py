@@ -1,18 +1,14 @@
-from ir_sim.env import EnvBase
+import irsim
 import sys
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
-import time
-from scipy.spatial import ConvexHull, convex_hull_plot_2d
 import cv2
-import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
-# from pyhull.convex_hull import ConvexHull
 
 # environment
-env = EnvBase('lidar_path_track.yaml', save_ani=False, display=True, full=False)
-car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')
+env = irsim.make(save_ani=False, display=True, full=False)
+car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')
 obs = namedtuple('obstacle', 'center radius vertex cone_type velocity')
 
 # saved ref path
@@ -44,7 +40,7 @@ def scan_box(state, scan_data):
         point_array = np.hstack(point_list).T
         labels = DBSCAN(eps=2.0, min_samples=6).fit_predict(point_array)
 
-        for label in labels:
+        for label in np.unique(labels):
             if label == -1:
                 continue
             else:
@@ -69,11 +65,9 @@ def scan_box(state, scan_data):
 def main():
     
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.wheelbase, [10, 1], [10, 0.5], 'acker')
     
-    obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 0, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 3, 'cone_type': 'Rpositive'}] # define the number of obstacles in advance
-
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=5, iter_num=5, obstacle_template_list=obstacle_template_list, obstacle_order=True, wu=0.5, slack_gain=5)
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, max_edge_num=4, max_obs_num=3, obstacle_order=True, wu=1.0, slack_gain=10)
     
     for i in range(500):   
         
@@ -88,11 +82,10 @@ def main():
         opt_vel, info = mpc_opt.control(env.robot.state, 4, obs_list)
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)
 
-        env.step(opt_vel, stop=False)
+        env.step(opt_vel)
         env.render(show_traj=True, show_trail=True)
 
         if env.done():
-            env.render_once(show_traj=True, show_trail=True)
             break
 
         if info['arrive']:

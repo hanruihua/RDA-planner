@@ -1,8 +1,8 @@
-from ir_sim.env import EnvBase
+import irsim
 import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
-from GCT.curve_generator import curve_generator
+from gctl.curve_generator import curve_generator
 
 # start and goal point of the robot
 start_point = np.array([[0], [20], [0]])
@@ -17,8 +17,8 @@ ref_path_list = cg.generate_curve('dubins', point_list, 0.1, 5)
 robot_init_point = np.zeros((4, 1))
 robot_init_point[0:3] = ref_path_list[0][0:3]
 
-env = EnvBase('corridor.yaml', save_ani=False, full=False, display=True, robot_args={'state': robot_init_point, 'goal':goal_point})
-car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce')  # robot information
+env = irsim.make(save_ani=False, full=False, display=True)
+car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')  # robot information
 
 env.draw_trajectory(ref_path_list, traj_type='-k')
 
@@ -26,9 +26,8 @@ if __name__ == '__main__':
 
     # obs_list = env.get_obstacle_list()
     robot_info = env.get_robot_info()
-    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.shape[2], [10, 1], [10, 0.5])
-    obstacle_template_list = [{'edge_num': 3, 'obstacle_num': 0, 'cone_type': 'norm2'}, {'edge_num': 4, 'obstacle_num': 6, 'cone_type': 'Rpositive'}]
-    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, obstacle_template_list=obstacle_template_list)
+    car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.wheelbase, [10, 1], [10, 0.5], 'acker')
+    mpc_opt = MPC(car_tuple, ref_path_list, sample_time=env.step_time, max_edge_num=4, max_obs_num=6)
     
     for i in range(500):   
         

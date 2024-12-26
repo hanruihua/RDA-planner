@@ -4,31 +4,44 @@ world:
   step_time: 0.1
   sample_time: 0.1
   offset: [5, 5]
+  collision_mode: 'stop'  # 'stop', 'unobstructed', 'reactive'
+  control_mode: 'auto'  # 'keyboard', 'auto'
 
-robots:
-  type: 'robot_acker'  # # robot_omni, robot_diff, robot_acker
-  number: 1
-  state: [10, 40, 1.57, 0]  
-  shape: [4.6, 1.6, 3, 1.6] # for acker (default)
-  goal: [40, 40, 0] 
-  vel_type: 'steer'
-  vel_min: [-10, -1]
-  vel_max: [10, 1]
-  psi_limit: 1
-  arrive_mode: 'state'
-  
-obstacles:
-  - type: 'obstacle_polygon'
-    number: 0
-    distribute: {mode: 'manual', 
-                  states: [[0, 0, 0], [0, 0, 0]],
-                  shapes: [ [[31, 24], [33, 24], [33, 28], [31, 28]], [[5, 46], [15, 46], [15, 50], [5, 50]] ] } 
 
-  - type: 'obstacle_circle'
-    number: 7
-    distribute: {mode: 'manual', states: [[20, 34], [31, 38], [10, 20], [41, 25], [20, 33], [16, 26], [10, 24], [18, 20], [25, 35], [19, 26], [10, 30]], shapes: [0.5]}  # shapes: radiuses 
-    # dynamic: {sport: 'default', goals: [[4, 1], [9, 9]], vel: 0.3}
-    dynamic: {sport: 'wander', sport_range: [10, 10, 40, 40], vel: 1.0}
+robot:
+  - kinematics: {name: 'acker'} 
+    shape: {name: 'rectangle', length: 4.6, width: 1.6, wheelbase: 3}
+    state: [10, 40, 1.57, 0] 
+    goal: [40, 40, 0] 
+    vel_min: [-10, -1]
+    vel_max: [10, 1]
+    goal_threshold: 0.3
+    plot:
+      show_trail: True
+      show_goal: False
+
+obstacle:
+  - number: 7
+    distribution: {name: 'random', range_low: [10, 10, -3.14], range_high: [40, 40, 3.14]}
+    kinematics: {name: 'diff'}
+    shape:
+      - {name: 'circle', radius: 0.5}  # radius
+      - {name: 'circle', radius: 0.6}  # radius
+      - {name: 'circle', radius: 0.7}  # radius
+      - {name: 'circle', radius: 1.0}  # radius
+      - {name: 'circle', radius: 0.5}  # radius
+
+    behavior: 
+      - {name: 'dash', range_low: [10, 10, -3.14], range_high: [40, 40, 3.14], wander: True}
+
+    vel_min: [-1.0, -3.14]
+    vel_max: [1.0, 3.14]
+    arrive_mode: position
+    goal_threshold: 0.3
+    plot:
+      show_goal: False
+      show_arrow: True
+      show_trail: False
 
 
   
