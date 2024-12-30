@@ -43,7 +43,7 @@ pip install -e .
 
 ## Run examples
 
-### Demonstrations in [ir-sim](https://github.com/hanruihua/ir-sim) 
+### Demonstrations on [ir-sim](https://github.com/hanruihua/ir-sim) 
 
 Please install ir-sim by:
 
