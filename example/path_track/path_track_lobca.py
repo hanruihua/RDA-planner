@@ -4,22 +4,30 @@ import numpy as np
 from RDA_planner.mpc import MPC
 from collections import namedtuple
 import time
+from gctl.curve_generator import curve_generator
 
 # environment
 env = irsim.make(save_ani=False, display=True, full=False)
 car = namedtuple('car', 'G h cone_type wheelbase max_speed max_acce dynamics')
 
 # saved ref path
-npy_path = sys.path[0] + '/path_track_ref.npy'
-ref_path_list = list(np.load(npy_path, allow_pickle=True))
+start_point = np.array([[0], [25], [0]])
+goal_point = np.array([[59], [25], [0]])
+point_list = [start_point, goal_point]
+cg = curve_generator()
+ref_path_list = cg.generate_curve('dubins', point_list, 0.1, 5)
+
+# npy_path = sys.path[0] + '/path_track_ref.npy'
+# ref_path_list = list(np.load(npy_path, allow_pickle=True))
 env.draw_trajectory(ref_path_list, traj_type='-k') # plot path
+
 
 def main():
     
     robot_info = env.get_robot_info()
     car_tuple = car(robot_info.G, robot_info.h, robot_info.cone_type, robot_info.wheelbase, [10, 1], [10, 0.5], 'acker')
     
-    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, obstacle_order=True, ro1=300, max_edge_num=4, max_obs_num=11, slack_gain=8, lobca=True) 
+    mpc_opt = MPC(car_tuple, ref_path_list, receding=10, sample_time=env.step_time, process_num=4, iter_num=2, obstacle_order=True, ro1=300, max_edge_num=4, max_obs_num=11, slack_gain=8, lobca=True, ws=0.2) 
                          
     for i in range(500):   
         
