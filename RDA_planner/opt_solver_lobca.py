@@ -143,7 +143,7 @@ class opt_solver:
         constraints += [ cp.abs(self.indep_u) <= self.max_speed]
         constraints += [ self.indep_s[:, 0:1] == nom_s[:, 0:1] ] # constraint on init state  
         
-        constraints += [ self.indep_u[0, :] >= 0.5] # constraints on max speed
+        # constraints += [ self.indep_u[0, :] >= 0.5] # constraints on max speed
 
         return cost, constraints
 

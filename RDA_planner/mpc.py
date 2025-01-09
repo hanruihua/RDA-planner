@@ -118,7 +118,7 @@ class MPC:
         self.lobca = lobca
 
         if self.lobca:
-            self.lobca_solver = opt_solver(receding=10, car_tuple=car_tuple, obstacle_list=[], iter_num=2, step_time=0.1, iter_threshold=0.1)
+            self.lobca_solver = opt_solver(receding=receding, car_tuple=car_tuple, obstacle_list=[], iter_num=iter_num, step_time=sample_time, iter_threshold=0.02)
 
         self.enable_reverse = enable_reverse
 
@@ -161,7 +161,11 @@ class MPC:
         else:
             rda_obs_list = obstacle_list
 
-        u_opt_array, info = self.rda.iterative_solve(
+        if self.lobca:
+            self.lobca_solver.update_obstecles(rda_obs_list)
+            u_opt_array, info = self.lobca_solver.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, ref_speed, 'lobca', **kwargs)
+        else:
+            u_opt_array, info = self.rda.iterative_solve(
             state_pre_array,
             self.cur_vel_array,
             ref_traj_list,
@@ -169,10 +173,6 @@ class MPC:
             rda_obs_list,
             **kwargs,
         )
-
-        if self.lobca:
-            self.lobca_solver.update_obstecles(rda_obs_list)
-            u_opt_array, info = self.lobca_solver.iterative_solve(state_pre_array, self.cur_vel_array, ref_traj_list, ref_speed, 'lobca')
 
         if self.cur_index >= len(cur_ref_path) - self.goal_index_threshold:
 
