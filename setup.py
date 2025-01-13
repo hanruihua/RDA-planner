@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='RDA_planner',
     py_modules=['RDA_planner'],
-    version= '2.4',
+    version= '3.0',
     python_requires='>=3.8',
     install_requires=[
         'cvxpy==1.5.2',
