@@ -32,7 +32,7 @@ if __name__ == '__main__':
             print('arrive point2')
             mpc_opt.update_parameter(max_sd=0.1, min_sd=0.1, slack_gain=1)
 
-        obs_list = env.get_obstacle_list()
+        obs_list = env.get_obstacle_info_list()
         opt_vel, info = mpc_opt.control(env.robot.state, 4, obs_list)
 
         env.draw_trajectory(info['opt_state_list'], 'r', refresh=True)

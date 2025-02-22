@@ -72,7 +72,7 @@ def main():
     
     for i in range(500):   
         
-        obs_list_ref = env.get_obstacle_list()
+        obs_list_ref = env.get_obstacle_info_list()
         scan_data = env.get_lidar_scan()
         # obs_list : obstacle: (center, radius, vertex, cone_type, velocity)
         obs_list = scan_box(env.robot.state, scan_data)
